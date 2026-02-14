@@ -101,15 +101,25 @@ class MainWindow(QMainWindow):
 
     def _on_open_directory(self):
         """Handle Open Directory menu action."""
-        directory = QFileDialog.getExistingDirectory(
-            self,
-            "Select Directory",
-            "",
-            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
-        )
+        from pathlib import Path as PathLib
 
-        if directory:
-            self.directory_selected.emit(Path(directory))
+        # Start in user's home directory
+        start_dir = str(PathLib.home())
+
+        # Create file dialog with better options
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle("Select Directory to Scan")
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        dialog.setOption(QFileDialog.DontResolveSymlinks, True)
+        dialog.setDirectory(start_dir)
+
+        # Execute dialog
+        if dialog.exec_():
+            directories = dialog.selectedFiles()
+            if directories:
+                directory = directories[0]
+                self.directory_selected.emit(Path(directory))
 
     def _on_about(self):
         """Handle About menu action."""
