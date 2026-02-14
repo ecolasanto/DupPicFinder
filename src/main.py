@@ -65,6 +65,9 @@ class DupPicFinderApp:
         Args:
             directory: Path to the selected directory
         """
+        # Clear the image viewer when opening a new directory
+        self.image_viewer.clear()
+
         # Update status
         self.main_window.update_status("Scanning...")
         self.app.processEvents()  # Force UI update
