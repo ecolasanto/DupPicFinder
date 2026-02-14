@@ -38,6 +38,13 @@ class DupPicFinderApp:
         self.main_window.set_left_panel(self.file_tree)
         self.main_window.set_right_panel(self.image_viewer)
 
+        # Ensure widgets are visible
+        self.file_tree.show()
+        self.image_viewer.show()
+
+        print(f"File tree visible: {self.file_tree.isVisible()}")
+        print(f"Image viewer visible: {self.image_viewer.isVisible()}")
+
         # Connect signals
         self._connect_signals()
 
