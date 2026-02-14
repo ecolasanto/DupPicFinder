@@ -106,12 +106,12 @@ class MainWindow(QMainWindow):
         # Start in user's home directory
         start_dir = str(PathLib.home())
 
-        # Use the simple static method - it works better for directory selection
+        # Use Qt's non-native dialog for consistent behavior on Linux Mint
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select Directory to Scan for Images",
             start_dir,
-            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks | QFileDialog.DontUseNativeDialog
         )
 
         if directory:
