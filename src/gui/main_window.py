@@ -105,28 +105,34 @@ class MainWindow(QMainWindow):
     def _on_open_directory(self):
         """Handle Open Directory menu action."""
         from pathlib import Path as PathLib
+        from PyQt5.QtWidgets import QPushButton, QLabel, QVBoxLayout, QDialog
 
         # Start in user's home directory
         start_dir = str(PathLib.home())
 
-        # Create a custom dialog with better behavior
+        # Create a custom dialog with a "Use This Folder" button
         dialog = QFileDialog(self)
-        dialog.setWindowTitle("Select Directory to Scan for Images")
+        dialog.setWindowTitle("Select Directory to Scan for Images - Navigate to folder, then click 'Use This Folder' or 'Choose'")
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly, True)
         dialog.setOption(QFileDialog.DontResolveSymlinks, True)
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setDirectory(start_dir)
 
-        # Auto-select the current directory when navigating (fixes double-click issue)
-        def on_directory_entered(directory):
-            """Automatically select the directory when entered."""
-            dialog.selectFile(directory)
+        # Add a custom "Use This Folder" button to select the current directory
+        use_current_btn = QPushButton("Use This Folder (Current View)")
 
-        dialog.directoryEntered.connect(on_directory_entered)
+        def use_current_directory():
+            """Select the current directory being viewed."""
+            current_dir = dialog.directory().absolutePath()
+            dialog.selectFile(current_dir)
+            dialog.accept()
+
+        use_current_btn.clicked.connect(use_current_directory)
+        dialog.layout().addWidget(use_current_btn)
 
         # Execute dialog
-        if dialog.exec_():
+        if dialog.exec_() == QDialog.Accepted:
             directories = dialog.selectedFiles()
             if directories:
                 directory = directories[0]
