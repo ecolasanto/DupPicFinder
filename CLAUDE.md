@@ -1,5 +1,15 @@
 # DupPicFinder - Duplicate Picture Finder and Manager
 
+## Project Boundaries
+
+**CRITICAL**: All work must be done exclusively within `/home/dad/workspace/DupPicFinder/` and its subdirectories.
+
+- Never modify files outside this directory
+- Always use absolute paths starting with `/home/dad/workspace/DupPicFinder/`
+- Verify working directory before any file operations
+- If the shell resets to a different directory, explicitly cd back to this project
+- Do not touch `/home/dad/workspace/Hobo-Onset/CompressorMonitor/` or any other projects
+
 ## Project Purpose
 
 DupPicFinder is a Python-based GUI desktop application designed to help users find, view, and manage duplicate image files across large photo collections. The application provides an intuitive interface for browsing images chronologically, identifying exact duplicates using hash-based detection, and safely managing files through manual review and deletion.
