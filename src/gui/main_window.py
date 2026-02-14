@@ -109,16 +109,28 @@ class MainWindow(QMainWindow):
         # Start in user's home directory
         start_dir = str(PathLib.home())
 
-        # Use Qt's non-native dialog for consistent behavior on Linux Mint
-        directory = QFileDialog.getExistingDirectory(
-            self,
-            "Select Directory to Scan for Images",
-            start_dir,
-            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks | QFileDialog.DontUseNativeDialog
-        )
+        # Create a custom dialog with better behavior
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle("Select Directory to Scan for Images")
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        dialog.setOption(QFileDialog.DontResolveSymlinks, True)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        dialog.setDirectory(start_dir)
 
-        if directory:
-            self.directory_selected.emit(Path(directory))
+        # Auto-select the current directory when navigating (fixes double-click issue)
+        def on_directory_entered(directory):
+            """Automatically select the directory when entered."""
+            dialog.selectFile(directory)
+
+        dialog.directoryEntered.connect(on_directory_entered)
+
+        # Execute dialog
+        if dialog.exec_():
+            directories = dialog.selectedFiles()
+            if directories:
+                directory = directories[0]
+                self.directory_selected.emit(Path(directory))
 
     def _on_about(self):
         """Handle About menu action."""
