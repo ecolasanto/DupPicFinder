@@ -119,6 +119,15 @@ class MainWindow(QMainWindow):
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setDirectory(start_dir)
 
+        # Keep the directory field populated as user navigates
+        def on_directory_entered(directory):
+            """Update the directory field when navigating."""
+            # Use QTimer to avoid interfering with the navigation
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(50, lambda: dialog.selectFile(directory))
+
+        dialog.directoryEntered.connect(on_directory_entered)
+
         # Add a custom "Use This Folder" button to select the current directory
         use_current_btn = QPushButton("Use This Folder (Current View)")
 
