@@ -35,7 +35,10 @@ class MainWindow(QMainWindow):
     def _init_ui(self):
         """Initialize the user interface."""
         self.setWindowTitle("DupPicFinder - Image Organizer")
-        self.setGeometry(100, 100, 1200, 800)
+
+        # Set initial size and allow resizing
+        self.resize(1200, 800)
+        self.setMinimumSize(600, 400)  # Allow shrinking to reasonable minimum
 
         # Create central widget with splitter
         central_widget = QWidget()
