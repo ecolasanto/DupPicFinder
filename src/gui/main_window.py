@@ -119,6 +119,24 @@ class MainWindow(QMainWindow):
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setDirectory(start_dir)
 
+        # Find and update the directory line edit directly (avoids selectFile issues)
+        from PyQt5.QtWidgets import QLineEdit
+
+        def update_directory_field():
+            """Update the directory field to show current path."""
+            # Find the QLineEdit widget in the dialog
+            for widget in dialog.findChildren(QLineEdit):
+                # Set it to show the current directory path
+                current_path = dialog.directory().absolutePath()
+                widget.setText(current_path)
+                break
+
+        # Update field when directory changes
+        dialog.directoryEntered.connect(lambda: update_directory_field())
+
+        # Initial update
+        update_directory_field()
+
         # Add a custom "Use This Folder" button to select the current directory
         use_current_btn = QPushButton("Use This Folder (Current View)")
 
