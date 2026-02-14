@@ -1,0 +1,8 @@
+PyQt5==5.15.10
+Pillow==10.2.0
+pillow-heif==0.13.1
+pytest==7.4.3
+pytest-qt==4.2.0
+pytest-cov==4.1.0
+black==23.12.1
+flake8==7.0.0
