@@ -93,18 +93,29 @@ class DupPicFinderApp:
         Args:
             image_file: Selected ImageFile object
         """
-        # Force UI update to show selection highlight before loading image
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtWidgets import QApplication
+
+        # Show loading status and wait cursor
+        self.main_window.update_status(f"Loading: {image_file.path.name}...")
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Force UI update to show selection highlight and loading status
         self.app.processEvents()
 
-        # Load the image
-        success = self.image_viewer.load_image(image_file.path)
+        try:
+            # Load the image
+            success = self.image_viewer.load_image(image_file.path)
 
-        if success:
-            # Update status
-            self.main_window.update_status(f"Viewing: {image_file.path.name}")
-        else:
-            # Error message already shown by image viewer
-            self.main_window.update_status(f"Failed to load: {image_file.path.name}")
+            if success:
+                # Update status
+                self.main_window.update_status(f"Viewing: {image_file.path.name}")
+            else:
+                # Error message already shown by image viewer
+                self.main_window.update_status(f"Failed to load: {image_file.path.name}")
+        finally:
+            # Always restore cursor, even if loading fails
+            QApplication.restoreOverrideCursor()
 
     def run(self) -> int:
         """Run the application.
