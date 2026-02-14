@@ -136,12 +136,16 @@
 **Target Features**:
 - File renaming dialog
 - File deletion with confirmation
+- Image rotation (rotate left/right 90°)
+  - Keyboard shortcuts ([ and ] or Ctrl+Left/Right)
+  - Menu items (Edit → Rotate Left/Right)
+  - Permanent file modification
 - Enhanced keyboard navigation (arrow keys, Enter, Delete)
 - Background scanning with progress bar
 - Automated GUI tests with pytest-qt
 - Keyboard shortcuts display (Help → Keyboard Shortcuts)
 
-**Estimated Effort**: 4-5 hours
+**Estimated Effort**: 5-6 hours
 
 ---
 

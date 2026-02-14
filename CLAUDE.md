@@ -127,28 +127,32 @@ The following is a proposed order for feature development:
 8. **Image Viewing**: Full image rendering on selection
 9. **File Renaming**: Rename file functionality with UI
 10. **File Deletion**: Manual delete with confirmation dialog
+11. **Image Rotation**: Rotate image left (counter-clockwise 90°) and right (clockwise 90°)
+    - Keyboard shortcuts for rotation (e.g., [ and ] or Ctrl+Left/Right)
+    - Menu items: Edit → Rotate Left, Edit → Rotate Right
+    - Save rotation to file (permanently modify the image file)
 
 ### Phase 3: Duplicate Detection
-11. **Hash Generation**: Compute file hashes (MD5/SHA256)
-12. **Duplicate Finding**: Compare hashes to identify duplicates
-13. **Tree Display**: Tree-like structure for duplicate results
-14. **Export Results**: Write duplicate list to structured text file matching GUI tree format
+12. **Hash Generation**: Compute file hashes (MD5/SHA256)
+13. **Duplicate Finding**: Compare hashes to identify duplicates
+14. **Tree Display**: Tree-like structure for duplicate results
+15. **Export Results**: Write duplicate list to structured text file matching GUI tree format
 
 ### Phase 4: Format Support
-15. **Standard Formats**: JPG, PNG, GIF, BMP support
-16. **HEIC Support**: Add HEIC format handling
+16. **Standard Formats**: JPG, PNG, GIF, BMP support
+17. **HEIC Support**: Add HEIC format handling
 
 ### Phase 5: Performance & Polish
-17. **Large Dataset Handling**: Optimize for ~1TB of files
-18. **Progress Indicators**: Show progress during scanning/hashing
-19. **Error Handling**: Graceful handling of corrupted files, permissions
-20. **UI Polish**: Improve layout, add keyboard shortcuts, help text
+18. **Large Dataset Handling**: Optimize for ~1TB of files
+19. **Progress Indicators**: Show progress during scanning/hashing
+20. **Error Handling**: Graceful handling of corrupted files, permissions
+21. **UI Polish**: Improve layout, add keyboard shortcuts, help text
 
 ### Phase 6: Testing & Documentation
-21. **Integration Tests**: Test feature combinations
-22. **Performance Tests**: Verify handling of large datasets
-23. **User Documentation**: Create user guide/README
-24. **Code Review**: Final documentation review
+22. **Integration Tests**: Test feature combinations
+23. **Performance Tests**: Verify handling of large datasets
+24. **User Documentation**: Create user guide/README
+25. **Code Review**: Final documentation review
 
 ## Code Structure
 
