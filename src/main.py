@@ -93,6 +93,9 @@ class DupPicFinderApp:
         Args:
             image_file: Selected ImageFile object
         """
+        # Force UI update to show selection highlight before loading image
+        self.app.processEvents()
+
         # Load the image
         success = self.image_viewer.load_image(image_file.path)
 
