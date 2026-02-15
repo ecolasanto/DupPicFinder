@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
     delete_requested = pyqtSignal()
     rotate_left_requested = pyqtSignal()
     rotate_right_requested = pyqtSignal()
+    find_duplicates_requested = pyqtSignal()
 
     def __init__(self):
         """Initialize the main window."""
@@ -138,6 +139,17 @@ class MainWindow(QMainWindow):
         self.rotate_right_action.triggered.connect(lambda: self.rotate_right_requested.emit())
         self.rotate_right_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.rotate_right_action)
+
+        # Tools menu
+        tools_menu = menubar.addMenu("&Tools")
+
+        # Find Duplicates action
+        self.find_duplicates_action = QAction("Find &Duplicates...", self)
+        self.find_duplicates_action.setShortcut("Ctrl+D")
+        self.find_duplicates_action.setStatusTip("Find duplicate images (Ctrl+D)")
+        self.find_duplicates_action.triggered.connect(lambda: self.find_duplicates_requested.emit())
+        self.find_duplicates_action.setEnabled(False)  # Disabled until files are loaded
+        tools_menu.addAction(self.find_duplicates_action)
 
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -278,3 +290,11 @@ class MainWindow(QMainWindow):
             enabled: True to enable save, False to disable
         """
         self.save_action.setEnabled(enabled)
+
+    def set_find_duplicates_enabled(self, enabled: bool):
+        """Enable or disable the find duplicates action.
+
+        Args:
+            enabled: True to enable, False to disable
+        """
+        self.find_duplicates_action.setEnabled(enabled)
