@@ -14,12 +14,11 @@ from PyQt5.QtCore import QEventLoop
 
 from src.gui.main_window import MainWindow
 from src.gui.file_tree import FileTreeWidget
-from src.gui.image_viewer import ImageViewer
+from src.gui.tabbed_right_panel import TabbedRightPanel
 from src.gui.rename_dialog import RenameDialog
 from src.gui.delete_dialog import DeleteConfirmDialog
 from src.gui.scan_progress_dialog import ScanProgressDialog
 from src.gui.hash_progress_dialog import HashProgressDialog
-from src.gui.duplicates_view import DuplicatesView
 from src.core.scanner import DirectoryScanner
 from src.core.scan_worker import ScanWorker
 from src.core.hash_worker import HashWorker
@@ -45,8 +44,11 @@ class DupPicFinderApp:
         self.scanner = DirectoryScanner()
         self.main_window = MainWindow()
         self.file_tree = FileTreeWidget()
-        self.image_viewer = ImageViewer()
-        self.duplicates_view = DuplicatesView()
+        self.tabbed_panel = TabbedRightPanel()
+
+        # Quick references to tabbed panel contents
+        self.image_viewer = self.tabbed_panel.image_viewer
+        self.duplicates_view = self.tabbed_panel.duplicates_view
 
         # Scanning state
         self.scan_worker = None
@@ -58,14 +60,14 @@ class DupPicFinderApp:
 
         # Set up the main window panels
         self.main_window.set_left_panel(self.file_tree)
-        self.main_window.set_right_panel(self.image_viewer)
+        self.main_window.set_right_panel(self.tabbed_panel)
 
         # Ensure widgets are visible
         self.file_tree.show()
-        self.image_viewer.show()
+        self.tabbed_panel.show()
 
         print(f"File tree visible: {self.file_tree.isVisible()}")
-        print(f"Image viewer visible: {self.image_viewer.isVisible()}")
+        print(f"Tabbed panel visible: {self.tabbed_panel.isVisible()}")
 
         # Connect signals
         self._connect_signals()
@@ -102,6 +104,15 @@ class DupPicFinderApp:
 
         # When user requests export
         self.duplicates_view.export_requested.connect(self._on_export_requested)
+
+        # When user clicks a file in the duplicates view
+        self.tabbed_panel.file_selected_from_duplicates.connect(self._on_file_selected_from_duplicates)
+
+        # When user right-clicks in duplicates view
+        self.duplicates_view.delete_file_requested.connect(self._on_delete_file_from_duplicates)
+        self.duplicates_view.view_file_requested.connect(
+            lambda path: self._on_file_selected_from_duplicates(path, switch_to_viewer=True)
+        )
 
     def _setup_context_menu(self):
         """Set up the context menu for the file tree."""
@@ -251,6 +262,65 @@ class DupPicFinderApp:
             # Always restore cursor, even if loading fails
             QApplication.restoreOverrideCursor()
 
+    def _on_file_selected_from_duplicates(self, file_path: Path, switch_to_viewer: bool = False):
+        """Handle file selection from duplicates view.
+
+        Args:
+            file_path: Path to the selected file
+            switch_to_viewer: If True, switch to Image Viewer tab after loading
+        """
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtWidgets import QApplication
+
+        # If switching to viewer and image is already loaded, just switch tabs
+        if switch_to_viewer and self.image_viewer.current_image_path == file_path:
+            self.tabbed_panel.show_image_viewer()
+            self.main_window.update_status(f"Viewing: {file_path.name}")
+            return
+
+        # Find the corresponding ImageFile in scanned_files
+        image_file = None
+        for img_file in self.scanned_files:
+            if img_file.path == file_path:
+                image_file = img_file
+                break
+
+        if not image_file:
+            # File not found in scanned files
+            self.main_window.update_status(f"File not found: {file_path.name}")
+            return
+
+        # Select the file in the file tree
+        # This will trigger _on_file_selected which loads the image
+        for i in range(self.file_tree.topLevelItemCount()):
+            item = self.file_tree.topLevelItem(i)
+            item_file = item.data(self.file_tree.COL_FILENAME, Qt.UserRole)
+            if item_file and item_file.path == file_path:
+                self.file_tree.setCurrentItem(item)
+                break
+
+        # Load the image in the background
+        self.main_window.set_file_actions_enabled(True)
+        self.main_window.set_save_enabled(False)
+
+        # Show loading notification (only if not already loaded)
+        if self.image_viewer.current_image_path != file_path:
+            self.main_window.update_status(f"Loading image: {file_path.name}...")
+            QApplication.processEvents()  # Update UI immediately
+
+        try:
+            success = self.image_viewer.load_image(file_path)
+            if success:
+                self.main_window.update_status(f"Image loaded: {file_path.name}")
+
+                # Only switch to viewer if explicitly requested (e.g., from context menu)
+                if switch_to_viewer:
+                    self.tabbed_panel.show_image_viewer()
+            else:
+                self.main_window.update_status(f"Failed to load: {file_path.name}")
+        except Exception as e:
+            self.main_window.update_status(f"Error loading: {file_path.name}")
+
     def _on_rename_requested(self):
         """Handle rename file request."""
         # Get the currently selected file
@@ -344,6 +414,9 @@ class DupPicFinderApp:
 
             # Remove from file tree
             self.file_tree.remove_file_item(file_path)
+
+            # Remove from scanned_files list
+            self.scanned_files = [f for f in self.scanned_files if f.path != file_path]
 
             # If this file is currently displayed, clear the viewer
             if self.image_viewer.current_image_path == file_path:
@@ -520,9 +593,11 @@ class DupPicFinderApp:
 
         # Show results
         if duplicates:
-            # Switch right panel to duplicates view
-            self.main_window.set_right_panel(self.duplicates_view)
+            # Load duplicates into the duplicates view
             self.duplicates_view.load_duplicates(duplicates)
+
+            # Switch to duplicates tab
+            self.tabbed_panel.show_duplicates()
 
             # Update status
             self.main_window.update_status(
@@ -536,7 +611,8 @@ class DupPicFinderApp:
                 "Duplicates Found",
                 f"Found {len(duplicates)} groups of duplicate files.\n\n"
                 f"Total duplicate files: {self.duplicate_finder.get_duplicate_count()}\n"
-                f"Switch to the duplicates view to see results.",
+                f"View them in the 'Duplicates' tab.\n"
+                f"Click any file path to view and manage it.",
             )
         else:
             # No duplicates found
@@ -559,6 +635,83 @@ class DupPicFinderApp:
 
         # Update status bar
         self.main_window.update_status(f"Hash error: {error_message}")
+
+    def _on_delete_file_from_duplicates(self, file_path: Path):
+        """Handle delete request from duplicates view.
+
+        Args:
+            file_path: Path to the file to delete
+        """
+        # Find the ImageFile object
+        image_file = None
+        for img_file in self.scanned_files:
+            if img_file.path == file_path:
+                image_file = img_file
+                break
+
+        if not image_file:
+            QMessageBox.warning(
+                self.main_window,
+                "File Not Found",
+                f"Could not find file: {file_path.name}",
+            )
+            return
+
+        # Show confirmation dialog (same as deleting from file tree)
+        dialog = DeleteConfirmDialog(file_path, self.main_window)
+        if not (dialog.exec_() and dialog.is_confirmed()):
+            # User cancelled
+            return
+
+        # Perform the deletion
+        self._perform_delete(image_file)
+
+        # Update the duplicates view without re-scanning
+        self._update_duplicates_after_deletion(file_path)
+
+    def _update_duplicates_after_deletion(self, deleted_path: Path):
+        """Update the duplicates view after a file is deleted.
+
+        Removes the deleted file from duplicate groups and refreshes the view
+        without requiring a full re-scan.
+
+        Args:
+            deleted_path: Path of the file that was deleted
+        """
+        # Get current duplicate groups
+        current_groups = self.duplicates_view.get_duplicate_groups()
+
+        if not current_groups:
+            return
+
+        # Update groups by removing the deleted file
+        updated_groups = []
+        for group in current_groups:
+            # Remove the deleted file from this group
+            remaining_files = [f for f in group.files if f.path != deleted_path]
+
+            # Only keep the group if it still has duplicates (2+ files)
+            if len(remaining_files) > 1:
+                # Create a new group with the remaining files
+                from src.core.duplicate_finder import DuplicateGroup
+                updated_group = DuplicateGroup(group.hash, remaining_files)
+                updated_groups.append(updated_group)
+
+        # Reload the duplicates view with updated groups
+        self.duplicates_view.load_duplicates(updated_groups)
+
+        # Update status
+        if updated_groups:
+            # Calculate new statistics
+            total_duplicates = sum(g.count - 1 for g in updated_groups)
+            self.main_window.update_status(
+                f"Deleted: {deleted_path.name}. "
+                f"{len(updated_groups)} duplicate groups remaining "
+                f"({total_duplicates} duplicate files)"
+            )
+        else:
+            # No more duplicates
+            self.main_window.update_status(f"Deleted: {deleted_path.name}. No duplicates remaining.")
 
     def _on_export_requested(self):
         """Handle export duplicates request."""

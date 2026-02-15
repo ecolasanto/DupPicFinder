@@ -10,7 +10,9 @@ from PyQt5.QtWidgets import (
     QLabel,
     QPushButton,
     QHBoxLayout,
-    QHeaderView
+    QHeaderView,
+    QMenu,
+    QAction
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 
@@ -28,6 +30,8 @@ class DuplicatesView(QWidget):
 
     # Signals
     export_requested = pyqtSignal()
+    delete_file_requested = pyqtSignal(Path)  # File path to delete
+    view_file_requested = pyqtSignal(Path)  # File path to view
 
     def __init__(self, parent=None):
         """Initialize the duplicates view.
@@ -73,6 +77,10 @@ class DuplicatesView(QWidget):
 
         # Alternating row colors
         self.tree.setAlternatingRowColors(True)
+
+        # Enable context menu
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._on_context_menu)
 
         layout.addWidget(self.tree)
 
@@ -172,3 +180,37 @@ class DuplicatesView(QWidget):
         self._duplicate_groups = []
         self.summary_label.setText("No duplicates found")
         self.export_button.setEnabled(False)
+
+    def _on_context_menu(self, position):
+        """Handle context menu request on tree item.
+
+        Args:
+            position: Position where menu was requested
+        """
+        # Get the item at the position
+        item = self.tree.itemAt(position)
+        if not item:
+            return
+
+        # Get file path from item data (only child items have file paths)
+        file_path = item.data(0, Qt.UserRole)
+        if not file_path or not isinstance(file_path, Path):
+            return
+
+        # Create context menu
+        menu = QMenu(self.tree)
+
+        # View Image action
+        view_action = QAction("View Image", menu)
+        view_action.triggered.connect(lambda: self.view_file_requested.emit(file_path))
+        menu.addAction(view_action)
+
+        menu.addSeparator()
+
+        # Delete File action
+        delete_action = QAction("Delete File...", menu)
+        delete_action.triggered.connect(lambda: self.delete_file_requested.emit(file_path))
+        menu.addAction(delete_action)
+
+        # Show menu at cursor position
+        menu.exec_(self.tree.viewport().mapToGlobal(position))
