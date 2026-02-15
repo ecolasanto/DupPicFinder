@@ -131,21 +131,118 @@
 
 ---
 
-## Phase 2: File Management (PLANNED)
+## Phase 2: File Management ⏳ IN PROGRESS
 
-**Target Features**:
-- File renaming dialog
-- File deletion with confirmation
-- Image rotation (rotate left/right 90°)
-  - Keyboard shortcuts ([ and ] or Ctrl+Left/Right)
-  - Menu items (Edit → Rotate Left/Right)
-  - Permanent file modification
-- Enhanced keyboard navigation (arrow keys, Enter, Delete)
-- Background scanning with progress bar
-- Automated GUI tests with pytest-qt
-- Keyboard shortcuts display (Help → Keyboard Shortcuts)
+**Status**: 5 of 7 features completed
+**Completion Date**: 2026-02-15 (partial)
 
-**Estimated Effort**: 5-6 hours
+### Implemented Features
+
+#### 1. File Renaming ✅
+- [x] File operations module (`file_ops.py`) with `rename_file()` function
+- [x] Rename dialog with input validation
+- [x] Edit menu → Rename File (Ctrl+R, F2)
+- [x] Right-click context menu support
+- [x] Full file path display in file tree
+- [x] Updates file tree after rename
+- [x] Error handling for invalid names, duplicates, permissions
+- [x] **Tests**: 10/10 passing (rename operations)
+
+#### 2. File Deletion ✅
+- [x] Delete confirmation dialog with file details
+- [x] Edit menu → Delete File (Delete key)
+- [x] Right-click context menu support
+- [x] Auto-select next file after deletion
+- [x] Single confirmation (no double-prompt)
+- [x] Removes item from file tree
+- [x] Clears image viewer if deleted file was displayed
+- [x] Error handling for permissions, missing files
+- [x] **Tests**: 4/4 passing (delete operations)
+
+#### 3. Image Rotation ✅
+- [x] In-memory rotation (left/right 90°)
+- [x] Keyboard shortcuts: `[` (rotate left), `]` (rotate right)
+- [x] Edit menu → Rotate Left/Right
+- [x] Right-click context menu support
+- [x] Explicit save workflow (Ctrl+S)
+- [x] Save action grayed out until file is modified
+- [x] Status bar shows "(unsaved)" after rotation
+- [x] Preserves EXIF data when saving
+- [x] `rotate_image()` function in file_ops
+- [x] `rotate()` and `save_changes()` in ImageViewer
+- [x] **Tests**: 8/8 passing (rotation operations)
+
+#### 4. Enhanced Keyboard Navigation ✅
+- [x] Arrow keys for file list navigation (built-in)
+- [x] Enter to preview selected file (built-in)
+- [x] Delete key for delete action
+- [x] F2 as alternate rename shortcut
+- [x] Ctrl+R for rename
+- [x] Ctrl+S for save
+- [x] `[` and `]` for rotation
+- [x] Ctrl+O for open directory
+- [x] Ctrl+Q for exit
+- [x] Status bar hints for keyboard shortcuts
+
+#### 5. Keyboard Shortcuts Help Dialog ✅
+- [x] ShortcutsDialog displaying all shortcuts
+- [x] Help menu → Keyboard Shortcuts (F1)
+- [x] Organized by category (File, Edit, Navigation)
+- [x] Clean table layout with bold shortcuts
+- [x] Non-modal dialog (can use app while viewing)
+
+#### 6. UI Improvements ✅
+- [x] Full file path display in file tree (not just filename)
+- [x] Right-click context menu on file tree
+- [x] Context menu includes: Save, Rename, Delete, Rotate Left, Rotate Right
+- [x] Edit menu actions enable/disable based on file selection
+- [x] Save action enable/disable based on modification state
+- [x] Updated status bar messages
+
+### Test Summary
+
+**Total Tests**: 48
+**Passing**: 48
+**Failing**: 0
+**Coverage**: Core modules at 95%+
+
+#### Test Breakdown by Module
+
+| Module | Tests | Status |
+|--------|-------|--------|
+| `test_file_model.py` | 7 | ✅ All passing |
+| `test_formats.py` | 10 | ✅ All passing |
+| `test_scanner.py` | 9 | ✅ All passing |
+| `test_file_ops.py` | 22 | ✅ All passing |
+| **Total** | **48** | **✅ 100%** |
+
+### Remaining Features (Phase 2)
+
+#### 7. Background Scanning with Progress Bar ⏳ PENDING
+- [ ] QThread worker for non-blocking scanning
+- [ ] Progress dialog with file count updates
+- [ ] Cancellation support
+- [ ] Prevents UI freezing during large scans
+
+#### 8. Automated GUI Tests ⏳ PENDING
+- [ ] pytest-qt setup and configuration
+- [ ] Tests for main window initialization
+- [ ] Tests for file tree interactions
+- [ ] Tests for image viewer
+- [ ] Tests for dialogs (rename, delete, shortcuts)
+
+### Manual Testing Checklist ✅
+
+- [x] File renaming works with full path display
+- [x] File deletion with single confirmation
+- [x] Next file auto-selected after deletion
+- [x] Image rotation (left/right) works in-memory
+- [x] Save button enables after rotation
+- [x] Save writes rotation to disk
+- [x] Right-click context menu shows all actions
+- [x] All keyboard shortcuts work correctly
+- [x] F1 shows keyboard shortcuts dialog
+- [x] Status bar shows helpful hints
 
 ---
 
