@@ -9,7 +9,8 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from PyQt5.QtWidgets import QApplication, QMessageBox, QMenu
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMenu, QFileDialog
+from PyQt5.QtCore import QEventLoop
 
 from src.gui.main_window import MainWindow
 from src.gui.file_tree import FileTreeWidget
@@ -17,10 +18,15 @@ from src.gui.image_viewer import ImageViewer
 from src.gui.rename_dialog import RenameDialog
 from src.gui.delete_dialog import DeleteConfirmDialog
 from src.gui.scan_progress_dialog import ScanProgressDialog
+from src.gui.hash_progress_dialog import HashProgressDialog
+from src.gui.duplicates_view import DuplicatesView
 from src.core.scanner import DirectoryScanner
 from src.core.scan_worker import ScanWorker
+from src.core.hash_worker import HashWorker
+from src.core.duplicate_finder import DuplicateFinder
 from src.core.file_ops import rename_file, delete_file, rotate_image, FileOperationError
 from src.core.file_model import ImageFile
+from src.utils.export import export_duplicates_to_file
 
 
 class DupPicFinderApp:
@@ -40,10 +46,15 @@ class DupPicFinderApp:
         self.main_window = MainWindow()
         self.file_tree = FileTreeWidget()
         self.image_viewer = ImageViewer()
+        self.duplicates_view = DuplicatesView()
 
         # Scanning state
         self.scan_worker = None
         self.scanned_files = []  # Accumulate files during scan
+
+        # Duplicate detection state
+        self.duplicate_finder = DuplicateFinder(algorithm='md5')
+        self.hash_worker = None
 
         # Set up the main window panels
         self.main_window.set_left_panel(self.file_tree)
@@ -85,6 +96,12 @@ class DupPicFinderApp:
         # When user requests rotation
         self.main_window.rotate_left_requested.connect(self._on_rotate_left_requested)
         self.main_window.rotate_right_requested.connect(self._on_rotate_right_requested)
+
+        # When user requests duplicate finding
+        self.main_window.find_duplicates_requested.connect(self._on_find_duplicates_requested)
+
+        # When user requests export
+        self.duplicates_view.export_requested.connect(self._on_export_requested)
 
     def _setup_context_menu(self):
         """Set up the context menu for the file tree."""
@@ -173,6 +190,10 @@ class DupPicFinderApp:
 
         # Load all files into tree at once
         self.file_tree.load_files(self.scanned_files)
+
+        # Enable Find Duplicates action if we have files
+        if found > 0:
+            self.main_window.set_find_duplicates_enabled(True)
 
         # Update status bar
         message = f"Found {found} images (scanned {scanned} files)"
@@ -439,6 +460,150 @@ class DupPicFinderApp:
                 f"Failed to rotate image:\n\n{str(e)}",
             )
             self.main_window.update_status("Rotation failed")
+
+    def _on_find_duplicates_requested(self):
+        """Handle find duplicates request."""
+        # Make sure we have files loaded
+        if not self.scanned_files:
+            QMessageBox.warning(
+                self.main_window,
+                "No Files Loaded",
+                "Please open a directory and scan for files first.",
+            )
+            return
+
+        # Clear previous duplicate finder state
+        self.duplicate_finder.clear()
+
+        # Create progress dialog
+        progress_dialog = HashProgressDialog(self.main_window)
+
+        # Create hash worker
+        self.hash_worker = HashWorker(self.scanned_files, algorithm='md5')
+
+        # Connect worker signals
+        self.hash_worker.file_hashed.connect(
+            lambda path, hash_val: self.duplicate_finder.add_file_hash(path, hash_val)
+        )
+        self.hash_worker.hash_progress.connect(progress_dialog.update_progress)
+        self.hash_worker.hash_complete.connect(
+            lambda count: self._on_hash_complete(progress_dialog, count)
+        )
+        self.hash_worker.hash_error.connect(
+            lambda error: self._on_hash_error(progress_dialog, error)
+        )
+
+        # Connect dialog cancel to worker cancel
+        progress_dialog.cancel_button.clicked.connect(self.hash_worker.cancel)
+
+        # Start hashing
+        self.hash_worker.start()
+
+        # Show progress dialog (blocks until closed)
+        progress_dialog.exec_()
+
+    def _on_hash_complete(self, progress_dialog: HashProgressDialog, hashed_count: int):
+        """Handle hash completion.
+
+        Args:
+            progress_dialog: Progress dialog to update
+            hashed_count: Number of files hashed
+        """
+        # Update progress dialog
+        progress_dialog.set_complete(hashed_count)
+
+        # Find duplicates
+        duplicates = self.duplicate_finder.find_duplicates(self.scanned_files)
+
+        # Close progress dialog
+        progress_dialog.accept()
+
+        # Show results
+        if duplicates:
+            # Switch right panel to duplicates view
+            self.main_window.set_right_panel(self.duplicates_view)
+            self.duplicates_view.load_duplicates(duplicates)
+
+            # Update status
+            self.main_window.update_status(
+                f"Found {len(duplicates)} duplicate groups "
+                f"({self.duplicate_finder.get_duplicate_count()} duplicate files)"
+            )
+
+            # Show info message
+            QMessageBox.information(
+                self.main_window,
+                "Duplicates Found",
+                f"Found {len(duplicates)} groups of duplicate files.\n\n"
+                f"Total duplicate files: {self.duplicate_finder.get_duplicate_count()}\n"
+                f"Switch to the duplicates view to see results.",
+            )
+        else:
+            # No duplicates found
+            self.main_window.update_status("No duplicates found")
+            QMessageBox.information(
+                self.main_window,
+                "No Duplicates",
+                "No duplicate files were found in the scanned images.",
+            )
+
+    def _on_hash_error(self, progress_dialog: HashProgressDialog, error_message: str):
+        """Handle hash error.
+
+        Args:
+            progress_dialog: Progress dialog to update
+            error_message: Error message
+        """
+        # Update progress dialog with error
+        progress_dialog.set_error(error_message)
+
+        # Update status bar
+        self.main_window.update_status(f"Hash error: {error_message}")
+
+    def _on_export_requested(self):
+        """Handle export duplicates request."""
+        duplicates = self.duplicates_view.get_duplicate_groups()
+
+        if not duplicates:
+            QMessageBox.warning(
+                self.main_window,
+                "No Duplicates",
+                "No duplicates to export.",
+            )
+            return
+
+        # Show save file dialog
+        file_path, _ = QFileDialog.getSaveFileName(
+            self.main_window,
+            "Export Duplicates",
+            str(Path.home() / "duplicates_report.txt"),
+            "Text Files (*.txt);;All Files (*)"
+        )
+
+        if not file_path:
+            return  # User cancelled
+
+        try:
+            # Export duplicates
+            export_duplicates_to_file(duplicates, file_path)
+
+            # Show success message
+            QMessageBox.information(
+                self.main_window,
+                "Export Successful",
+                f"Duplicates exported to:\n{file_path}",
+            )
+
+            self.main_window.update_status(f"Exported duplicates to: {file_path}")
+
+        except Exception as e:
+            # Show error message
+            QMessageBox.critical(
+                self.main_window,
+                "Export Failed",
+                f"Failed to export duplicates:\n\n{str(e)}",
+            )
+            self.main_window.update_status("Export failed")
 
     def run(self) -> int:
         """Run the application.

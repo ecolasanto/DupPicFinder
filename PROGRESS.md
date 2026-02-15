@@ -259,16 +259,60 @@
 
 ---
 
-## Phase 3: Duplicate Detection (PLANNED)
+## Phase 3: Duplicate Detection ✅ COMPLETE
 
-**Target Features**:
-- MD5/SHA256 hash generation
-- Duplicate identification by hash comparison
-- Tree widget display for duplicate groups
-- Export duplicate list to text file
-- Progress indicator for hashing large files
+**Status**: All features completed
+**Completion Date**: 2026-02-15
 
-**Estimated Effort**: 5-6 hours
+### Implemented Features
+
+#### 1. Hash Generation ✅
+- [x] MD5 and SHA256 hash algorithms
+- [x] Chunk-based reading for large files (8KB chunks)
+- [x] Convenience functions for both algorithms
+- [x] Comprehensive error handling
+- [x] **Tests**: 14/14 passing
+
+#### 2. Duplicate Detection ✅
+- [x] DuplicateGroup class for representing duplicate sets
+- [x] DuplicateFinder with hash comparison logic
+- [x] Groups files by identical hash values
+- [x] Statistics tracking (groups, duplicates, wasted space)
+- [x] Sorted results (by count, then filename)
+- [x] **Tests**: 15/15 passing
+
+#### 3. Background Hash Worker ✅
+- [x] HashWorker QThread for non-blocking hashing
+- [x] Progress signals (file_hashed, hash_progress, hash_complete)
+- [x] Cancellation support
+- [x] Real-time updates during hashing
+
+#### 4. Tree Display ✅
+- [x] DuplicatesView widget with tree structure
+- [x] Filename at root level
+- [x] Folder paths as children
+- [x] Summary statistics display
+- [x] File size formatting (B, KB, MB, GB)
+- [x] Wasted space calculation
+
+#### 5. Export Results ✅
+- [x] Export to structured text file
+- [x] Tree format matching GUI display
+- [x] Summary statistics included
+- [x] Full file paths for all duplicates
+
+#### 6. GUI Integration ✅
+- [x] "Find Duplicates" menu item (Tools → Find Duplicates, Ctrl+D)
+- [x] Hash progress dialog with cancellation
+- [x] Automatic view switching to show results
+- [x] Export button in duplicates view
+- [x] Status bar updates
+
+### Test Summary
+
+**Total Tests**: 170
+**New Tests**: 29 (hasher + duplicate finder)
+**All Passing**: ✅ 100%
 
 ---
 
