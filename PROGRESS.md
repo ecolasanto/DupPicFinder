@@ -131,10 +131,10 @@
 
 ---
 
-## Phase 2: File Management ⏳ IN PROGRESS
+## Phase 2: File Management ✅ COMPLETE
 
-**Status**: 6 of 7 features completed
-**Completion Date**: 2026-02-15 (partial)
+**Status**: 7 of 7 features completed
+**Completion Date**: 2026-02-15
 
 ### Implemented Features
 
@@ -201,21 +201,27 @@
 
 ### Test Summary
 
-**Total Tests**: 54
-**Passing**: 54
+**Total Tests**: 141
+**Passing**: 141
 **Failing**: 0
-**Coverage**: Core modules at 95%+
+**Coverage**: Core and GUI modules at 95%+
 
 #### Test Breakdown by Module
 
 | Module | Tests | Status |
 |--------|-------|--------|
+| **Core Modules** | | |
 | `test_file_model.py` | 7 | ✅ All passing |
 | `test_formats.py` | 10 | ✅ All passing |
 | `test_scanner.py` | 9 | ✅ All passing |
 | `test_file_ops.py` | 22 | ✅ All passing |
 | `test_scan_worker.py` | 6 | ✅ All passing |
-| **Total** | **54** | **✅ 100%** |
+| **GUI Modules** | | |
+| `test_gui_main_window.py` | 24 | ✅ All passing |
+| `test_gui_file_tree.py` | 19 | ✅ All passing |
+| `test_gui_image_viewer.py` | 17 | ✅ All passing |
+| `test_gui_dialogs.py` | 27 | ✅ All passing |
+| **Total** | **141** | **✅ 100%** |
 
 #### 6. Background Scanning with Progress Bar ✅
 - [x] QThread worker (`ScanWorker`) for non-blocking scanning
@@ -226,14 +232,13 @@
 - [x] Event loop integration for responsive UI
 - [x] **Tests**: 6/6 passing (scan worker operations)
 
-### Remaining Features (Phase 2)
-
-#### 7. Automated GUI Tests ⏳ PENDING
-- [ ] pytest-qt setup and configuration
-- [ ] Tests for main window initialization
-- [ ] Tests for file tree interactions
-- [ ] Tests for image viewer
-- [ ] Tests for dialogs (rename, delete, shortcuts)
+#### 7. Automated GUI Tests ✅
+- [x] pytest-qt setup and configuration (already installed)
+- [x] Tests for main window initialization (24 tests)
+- [x] Tests for file tree interactions (19 tests)
+- [x] Tests for image viewer (17 tests)
+- [x] Tests for dialogs - rename, delete, shortcuts, scan progress (27 tests)
+- [x] **Tests**: 87/87 passing (GUI component tests)
 
 ### Manual Testing Checklist ✅
 
