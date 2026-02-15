@@ -107,8 +107,8 @@ class MainWindow(QMainWindow):
 
         # Rename File action
         self.rename_action = QAction("&Rename File...", self)
-        self.rename_action.setShortcut("Ctrl+R")
-        self.rename_action.setStatusTip("Rename the selected file")
+        self.rename_action.setShortcuts(["Ctrl+R", "F2"])  # F2 is common rename shortcut
+        self.rename_action.setStatusTip("Rename the selected file (Ctrl+R or F2)")
         self.rename_action.triggered.connect(lambda: self.rename_requested.emit())
         self.rename_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.rename_action)
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
         """Create the status bar."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("Ready")
+        self.status_bar.showMessage("Ready - Use Ctrl+O to open a directory, arrow keys to navigate")
 
     def _on_open_directory(self):
         """Handle Open Directory menu action."""
