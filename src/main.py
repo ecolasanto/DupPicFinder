@@ -9,14 +9,15 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMenu
 
 from src.gui.main_window import MainWindow
 from src.gui.file_tree import FileTreeWidget
 from src.gui.image_viewer import ImageViewer
 from src.gui.rename_dialog import RenameDialog
+from src.gui.delete_dialog import DeleteConfirmDialog
 from src.core.scanner import DirectoryScanner
-from src.core.file_ops import rename_file, FileOperationError
+from src.core.file_ops import rename_file, delete_file, FileOperationError
 from src.core.file_model import ImageFile
 
 
@@ -52,6 +53,9 @@ class DupPicFinderApp:
         # Connect signals
         self._connect_signals()
 
+        # Set up context menu for file tree
+        self._setup_context_menu()
+
         # Show the main window
         self.main_window.show()
 
@@ -68,6 +72,20 @@ class DupPicFinderApp:
 
         # When user requests delete
         self.main_window.delete_requested.connect(self._on_delete_requested)
+
+    def _setup_context_menu(self):
+        """Set up the context menu for the file tree."""
+        # Create context menu
+        context_menu = QMenu(self.file_tree)
+
+        # Add rename action (reuse the same action from main window)
+        context_menu.addAction(self.main_window.rename_action)
+
+        # Add delete action
+        context_menu.addAction(self.main_window.delete_action)
+
+        # Set the context menu on the file tree
+        self.file_tree.set_context_menu(context_menu)
 
     def _on_directory_selected(self, directory: Path):
         """Handle directory selection.
@@ -207,13 +225,51 @@ class DupPicFinderApp:
             )
             return
 
-        # Show confirmation dialog (will implement in next task)
-        # TODO: Implement delete confirmation dialog
-        QMessageBox.information(
-            self.main_window,
-            "Delete Not Implemented",
-            "Delete functionality will be implemented in the next task.",
-        )
+        # Open delete confirmation dialog
+        dialog = DeleteConfirmDialog(selected_file.path, self.main_window)
+        if dialog.exec_() and dialog.is_confirmed():
+            self._perform_delete(selected_file)
+
+    def _perform_delete(self, image_file: ImageFile):
+        """Perform the actual file deletion operation.
+
+        Args:
+            image_file: ImageFile object to delete
+        """
+        file_path = image_file.path
+
+        try:
+            # Perform the deletion
+            delete_file(file_path)
+
+            # Remove from file tree
+            self.file_tree.remove_file_item(file_path)
+
+            # If this file is currently displayed, clear the viewer
+            if self.image_viewer.current_image_path == file_path:
+                self.image_viewer.clear()
+
+            # Check if another file is now selected (QTreeWidget may auto-select)
+            # If so, keep actions enabled; otherwise disable them
+            selected_file = self.file_tree.get_selected_file()
+            if selected_file:
+                # Another file is selected, load it in the viewer
+                self._on_file_selected(selected_file)
+            else:
+                # No file selected, disable actions
+                self.main_window.set_file_actions_enabled(False)
+
+            # Update status
+            self.main_window.update_status(f"Deleted: {file_path.name}")
+
+        except FileOperationError as e:
+            # Show error dialog
+            QMessageBox.critical(
+                self.main_window,
+                "Delete Failed",
+                f"Failed to delete file:\n\n{str(e)}",
+            )
+            self.main_window.update_status("Delete failed")
 
     def run(self) -> int:
         """Run the application.

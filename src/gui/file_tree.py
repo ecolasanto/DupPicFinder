@@ -1,7 +1,7 @@
 """File tree widget for displaying image files."""
 
 from typing import List, Optional
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QHeaderView
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu
 from PyQt5.QtCore import Qt, pyqtSignal
 from src.core.file_model import ImageFile
 
@@ -32,11 +32,14 @@ class FileTreeWidget(QTreeWidget):
         self._init_ui()
         self._connect_signals()
 
+        # Context menu will be set by the main application
+        self.context_menu = None
+
     def _init_ui(self):
         """Initialize the user interface."""
         # Set up columns
         self.setColumnCount(3)
-        self.setHeaderLabels(["Filename", "Size", "Date"])
+        self.setHeaderLabels(["File Path", "Size", "Date"])
 
         # Configure column behavior
         header = self.header()
@@ -60,6 +63,10 @@ class FileTreeWidget(QTreeWidget):
     def _connect_signals(self):
         """Connect internal signals."""
         self.itemSelectionChanged.connect(self._on_selection_changed)
+
+        # Enable context menu
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._on_context_menu)
 
     def load_files(self, image_files: List[ImageFile]):
         """Load and display a list of image files.
@@ -85,8 +92,8 @@ class FileTreeWidget(QTreeWidget):
         """
         item = QTreeWidgetItem(self)
 
-        # Column 0: Filename
-        item.setText(self.COL_FILENAME, img_file.path.name)
+        # Column 0: Full file path
+        item.setText(self.COL_FILENAME, str(img_file.path))
 
         # Column 1: Size (formatted)
         item.setText(self.COL_SIZE, self._format_size(img_file.size))
@@ -96,6 +103,9 @@ class FileTreeWidget(QTreeWidget):
 
         # Store ImageFile object in item data
         item.setData(self.COL_FILENAME, Qt.UserRole, img_file)
+
+        # Make the path column sortable (by string path)
+        item.setData(self.COL_FILENAME, Qt.UserRole + 1, str(img_file.path))
 
         # Make the item sortable by numeric size
         item.setData(self.COL_SIZE, Qt.UserRole, img_file.size)
@@ -161,9 +171,10 @@ class FileTreeWidget(QTreeWidget):
             item = self.topLevelItem(i)
             img_file = item.data(self.COL_FILENAME, Qt.UserRole)
             if img_file.path == old_path:
-                # Update the item with new data
-                item.setText(self.COL_FILENAME, new_image_file.path.name)
+                # Update the item with new data (full path)
+                item.setText(self.COL_FILENAME, str(new_image_file.path))
                 item.setData(self.COL_FILENAME, Qt.UserRole, new_image_file)
+                item.setData(self.COL_FILENAME, Qt.UserRole + 1, str(new_image_file.path))
 
                 # Re-sort after updating
                 self.sortItems(self.currentColumn(), self.header().sortIndicatorOrder())
@@ -182,3 +193,22 @@ class FileTreeWidget(QTreeWidget):
             if img_file.path == file_path:
                 self.takeTopLevelItem(i)
                 break
+
+    def set_context_menu(self, menu: QMenu):
+        """Set the context menu for this widget.
+
+        Args:
+            menu: QMenu to show on right-click
+        """
+        self.context_menu = menu
+
+    def _on_context_menu(self, position):
+        """Handle context menu request.
+
+        Args:
+            position: Position where the menu was requested
+        """
+        # Only show menu if there's a file selected and menu is configured
+        if self.get_selected_file() and self.context_menu:
+            # Show the menu at the cursor position
+            self.context_menu.exec_(self.viewport().mapToGlobal(position))
