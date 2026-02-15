@@ -16,7 +16,9 @@ from src.gui.file_tree import FileTreeWidget
 from src.gui.image_viewer import ImageViewer
 from src.gui.rename_dialog import RenameDialog
 from src.gui.delete_dialog import DeleteConfirmDialog
+from src.gui.scan_progress_dialog import ScanProgressDialog
 from src.core.scanner import DirectoryScanner
+from src.core.scan_worker import ScanWorker
 from src.core.file_ops import rename_file, delete_file, rotate_image, FileOperationError
 from src.core.file_model import ImageFile
 
@@ -38,6 +40,10 @@ class DupPicFinderApp:
         self.main_window = MainWindow()
         self.file_tree = FileTreeWidget()
         self.image_viewer = ImageViewer()
+
+        # Scanning state
+        self.scan_worker = None
+        self.scanned_files = []  # Accumulate files during scan
 
         # Set up the main window panels
         self.main_window.set_left_panel(self.file_tree)
@@ -114,27 +120,79 @@ class DupPicFinderApp:
         # Clear the image viewer when opening a new directory
         self.image_viewer.clear()
 
-        # Update status
-        self.main_window.update_status("Scanning...")
-        self.app.processEvents()  # Force UI update
+        # Clear file list
+        self.file_tree.clear()
 
-        try:
-            # Scan the directory
-            image_files = self.scanner.scan(directory, recursive=True)
+        # Reset scanned files accumulator
+        self.scanned_files = []
 
-            # Load files into tree
-            self.file_tree.load_files(image_files)
+        # Create progress dialog
+        progress_dialog = ScanProgressDialog(self.main_window)
 
-            # Get statistics
-            stats = self.scanner.get_stats()
+        # Create scan worker thread
+        self.scan_worker = ScanWorker(directory, recursive=True)
 
-            # Update status with results
-            message = f"Found {stats['found']} images (scanned {stats['scanned']} files)"
-            self.main_window.update_status(message)
+        # Connect worker signals
+        self.scan_worker.file_found.connect(self._on_file_found)
+        self.scan_worker.scan_progress.connect(progress_dialog.update_progress)
+        self.scan_worker.scan_complete.connect(
+            lambda scanned, found: self._on_scan_complete(progress_dialog, scanned, found)
+        )
+        self.scan_worker.scan_error.connect(
+            lambda error: self._on_scan_error(progress_dialog, error)
+        )
 
-        except Exception as e:
-            # Show error in status bar
-            self.main_window.update_status(f"Error: {str(e)}")
+        # Connect dialog cancel to worker cancel
+        progress_dialog.cancel_button.clicked.connect(self.scan_worker.cancel)
+
+        # Start the scan
+        self.scan_worker.start()
+
+        # Show progress dialog (blocks until closed)
+        progress_dialog.exec_()
+
+    def _on_file_found(self, image_file: ImageFile):
+        """Handle a file found during scanning.
+
+        Args:
+            image_file: ImageFile object that was found
+        """
+        # Accumulate files (we'll load them all at once when complete)
+        self.scanned_files.append(image_file)
+
+    def _on_scan_complete(self, progress_dialog: ScanProgressDialog, scanned: int, found: int):
+        """Handle scan completion.
+
+        Args:
+            progress_dialog: Progress dialog to update
+            scanned: Total files scanned
+            found: Total image files found
+        """
+        # Update progress dialog
+        progress_dialog.set_complete(scanned, found)
+
+        # Load all files into tree at once
+        self.file_tree.load_files(self.scanned_files)
+
+        # Update status bar
+        message = f"Found {found} images (scanned {scanned} files)"
+        self.main_window.update_status(message)
+
+        # Close progress dialog
+        progress_dialog.accept()
+
+    def _on_scan_error(self, progress_dialog: ScanProgressDialog, error_message: str):
+        """Handle scan error.
+
+        Args:
+            progress_dialog: Progress dialog to update
+            error_message: Error message
+        """
+        # Update progress dialog with error
+        progress_dialog.set_error(error_message)
+
+        # Update status bar
+        self.main_window.update_status(f"Scan error: {error_message}")
 
     def _on_file_selected(self, image_file):
         """Handle file selection in the tree.

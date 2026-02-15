@@ -133,7 +133,7 @@
 
 ## Phase 2: File Management ⏳ IN PROGRESS
 
-**Status**: 5 of 7 features completed
+**Status**: 6 of 7 features completed
 **Completion Date**: 2026-02-15 (partial)
 
 ### Implemented Features
@@ -201,8 +201,8 @@
 
 ### Test Summary
 
-**Total Tests**: 48
-**Passing**: 48
+**Total Tests**: 54
+**Passing**: 54
 **Failing**: 0
 **Coverage**: Core modules at 95%+
 
@@ -214,17 +214,21 @@
 | `test_formats.py` | 10 | ✅ All passing |
 | `test_scanner.py` | 9 | ✅ All passing |
 | `test_file_ops.py` | 22 | ✅ All passing |
-| **Total** | **48** | **✅ 100%** |
+| `test_scan_worker.py` | 6 | ✅ All passing |
+| **Total** | **54** | **✅ 100%** |
+
+#### 6. Background Scanning with Progress Bar ✅
+- [x] QThread worker (`ScanWorker`) for non-blocking scanning
+- [x] Progress dialog (`ScanProgressDialog`) with file count updates
+- [x] Cancellation support
+- [x] Prevents UI freezing during large scans
+- [x] Real-time progress updates every 10 files
+- [x] Event loop integration for responsive UI
+- [x] **Tests**: 6/6 passing (scan worker operations)
 
 ### Remaining Features (Phase 2)
 
-#### 7. Background Scanning with Progress Bar ⏳ PENDING
-- [ ] QThread worker for non-blocking scanning
-- [ ] Progress dialog with file count updates
-- [ ] Cancellation support
-- [ ] Prevents UI freezing during large scans
-
-#### 8. Automated GUI Tests ⏳ PENDING
+#### 7. Automated GUI Tests ⏳ PENDING
 - [ ] pytest-qt setup and configuration
 - [ ] Tests for main window initialization
 - [ ] Tests for file tree interactions
@@ -243,6 +247,10 @@
 - [x] All keyboard shortcuts work correctly
 - [x] F1 shows keyboard shortcuts dialog
 - [x] Status bar shows helpful hints
+- [x] Background scanning shows progress dialog
+- [x] Progress dialog updates file counts in real-time
+- [x] Cancel button stops scanning operation
+- [x] UI remains responsive during large scans
 
 ---
 
