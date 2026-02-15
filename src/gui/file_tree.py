@@ -148,3 +148,37 @@ class FileTreeWidget(QTreeWidget):
 
         item = selected_items[0]
         return item.data(self.COL_FILENAME, Qt.UserRole)
+
+    def update_file_item(self, old_path, new_image_file: ImageFile):
+        """Update a file item after it has been renamed.
+
+        Args:
+            old_path: Old path of the file (before rename)
+            new_image_file: Updated ImageFile object with new path
+        """
+        # Find the item with the old path
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            img_file = item.data(self.COL_FILENAME, Qt.UserRole)
+            if img_file.path == old_path:
+                # Update the item with new data
+                item.setText(self.COL_FILENAME, new_image_file.path.name)
+                item.setData(self.COL_FILENAME, Qt.UserRole, new_image_file)
+
+                # Re-sort after updating
+                self.sortItems(self.currentColumn(), self.header().sortIndicatorOrder())
+                break
+
+    def remove_file_item(self, file_path):
+        """Remove a file item from the tree.
+
+        Args:
+            file_path: Path of the file to remove
+        """
+        # Find and remove the item
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            img_file = item.data(self.COL_FILENAME, Qt.UserRole)
+            if img_file.path == file_path:
+                self.takeTopLevelItem(i)
+                break

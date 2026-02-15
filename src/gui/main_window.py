@@ -23,6 +23,8 @@ class MainWindow(QMainWindow):
 
     # Signals
     directory_selected = pyqtSignal(Path)
+    rename_requested = pyqtSignal()
+    delete_requested = pyqtSignal()
 
     def __init__(self):
         """Initialize the main window."""
@@ -86,6 +88,25 @@ class MainWindow(QMainWindow):
         exit_action.setStatusTip("Exit the application")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
+
+        # Edit menu
+        edit_menu = menubar.addMenu("&Edit")
+
+        # Rename File action
+        self.rename_action = QAction("&Rename File...", self)
+        self.rename_action.setShortcut("Ctrl+R")
+        self.rename_action.setStatusTip("Rename the selected file")
+        self.rename_action.triggered.connect(lambda: self.rename_requested.emit())
+        self.rename_action.setEnabled(False)  # Disabled until file is selected
+        edit_menu.addAction(self.rename_action)
+
+        # Delete File action
+        self.delete_action = QAction("&Delete File...", self)
+        self.delete_action.setShortcut("Delete")
+        self.delete_action.setStatusTip("Delete the selected file")
+        self.delete_action.triggered.connect(lambda: self.delete_requested.emit())
+        self.delete_action.setEnabled(False)  # Disabled until file is selected
+        edit_menu.addAction(self.delete_action)
 
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -192,3 +213,12 @@ class MainWindow(QMainWindow):
         """
         self.splitter.replaceWidget(1, widget)
         self.right_panel = widget
+
+    def set_file_actions_enabled(self, enabled: bool):
+        """Enable or disable file-specific actions (rename, delete, etc.).
+
+        Args:
+            enabled: True to enable actions, False to disable
+        """
+        self.rename_action.setEnabled(enabled)
+        self.delete_action.setEnabled(enabled)

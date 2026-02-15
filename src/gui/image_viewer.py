@@ -105,6 +105,15 @@ class ImageViewer(QWidget):
         self.image_label.clear()
         self.image_label.setText("No image selected")
 
+    @property
+    def current_image_path(self):
+        """Get the path of the currently displayed image.
+
+        Returns:
+            Path object of current image, or None if no image is displayed
+        """
+        return self._current_image_path
+
     def _display_scaled_image(self):
         """Display the current image scaled to fit the widget."""
         if self._original_pixmap is None:

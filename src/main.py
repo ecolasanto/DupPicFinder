@@ -1,6 +1,7 @@
 """Main application entry point for DupPicFinder."""
 
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Add the project root to Python path so 'src' imports work
@@ -8,12 +9,15 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from src.gui.main_window import MainWindow
 from src.gui.file_tree import FileTreeWidget
 from src.gui.image_viewer import ImageViewer
+from src.gui.rename_dialog import RenameDialog
 from src.core.scanner import DirectoryScanner
+from src.core.file_ops import rename_file, FileOperationError
+from src.core.file_model import ImageFile
 
 
 class DupPicFinderApp:
@@ -59,6 +63,12 @@ class DupPicFinderApp:
         # When user selects a file in the tree
         self.file_tree.file_selected.connect(self._on_file_selected)
 
+        # When user requests rename
+        self.main_window.rename_requested.connect(self._on_rename_requested)
+
+        # When user requests delete
+        self.main_window.delete_requested.connect(self._on_delete_requested)
+
     def _on_directory_selected(self, directory: Path):
         """Handle directory selection.
 
@@ -99,6 +109,9 @@ class DupPicFinderApp:
         from PyQt5.QtCore import Qt
         from PyQt5.QtWidgets import QApplication
 
+        # Enable file actions (rename, delete, etc.)
+        self.main_window.set_file_actions_enabled(True)
+
         # Show loading status and wait cursor
         self.main_window.update_status(f"Loading: {image_file.path.name}...")
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -119,6 +132,88 @@ class DupPicFinderApp:
         finally:
             # Always restore cursor, even if loading fails
             QApplication.restoreOverrideCursor()
+
+    def _on_rename_requested(self):
+        """Handle rename file request."""
+        # Get the currently selected file
+        selected_file = self.file_tree.get_selected_file()
+        if not selected_file:
+            QMessageBox.warning(
+                self.main_window,
+                "No File Selected",
+                "Please select a file to rename.",
+            )
+            return
+
+        # Open rename dialog
+        dialog = RenameDialog(selected_file.path, self.main_window)
+        if dialog.exec_():
+            new_name = dialog.get_new_name()
+            if new_name:
+                self._perform_rename(selected_file, new_name)
+
+    def _perform_rename(self, image_file: ImageFile, new_name: str):
+        """Perform the actual file rename operation.
+
+        Args:
+            image_file: ImageFile object to rename
+            new_name: New filename
+        """
+        old_path = image_file.path
+
+        try:
+            # Perform the rename
+            new_path = rename_file(old_path, new_name)
+
+            # Get file stats for the renamed file
+            stat = new_path.stat()
+
+            # Create updated ImageFile object with metadata
+            new_image_file = ImageFile(
+                path=new_path,
+                size=stat.st_size,
+                created=datetime.fromtimestamp(stat.st_ctime),
+                modified=datetime.fromtimestamp(stat.st_mtime)
+            )
+
+            # Update the file tree
+            self.file_tree.update_file_item(old_path, new_image_file)
+
+            # If this file is currently displayed, update the viewer
+            if self.image_viewer.current_image_path == old_path:
+                self.image_viewer.load_image(new_path)
+
+            # Update status
+            self.main_window.update_status(f"Renamed: {old_path.name} → {new_name}")
+
+        except FileOperationError as e:
+            # Show error dialog
+            QMessageBox.critical(
+                self.main_window,
+                "Rename Failed",
+                f"Failed to rename file:\n\n{str(e)}",
+            )
+            self.main_window.update_status("Rename failed")
+
+    def _on_delete_requested(self):
+        """Handle delete file request."""
+        # Get the currently selected file
+        selected_file = self.file_tree.get_selected_file()
+        if not selected_file:
+            QMessageBox.warning(
+                self.main_window,
+                "No File Selected",
+                "Please select a file to delete.",
+            )
+            return
+
+        # Show confirmation dialog (will implement in next task)
+        # TODO: Implement delete confirmation dialog
+        QMessageBox.information(
+            self.main_window,
+            "Delete Not Implemented",
+            "Delete functionality will be implemented in the next task.",
+        )
 
     def run(self) -> int:
         """Run the application.
