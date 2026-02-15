@@ -17,7 +17,7 @@ from src.gui.image_viewer import ImageViewer
 from src.gui.rename_dialog import RenameDialog
 from src.gui.delete_dialog import DeleteConfirmDialog
 from src.core.scanner import DirectoryScanner
-from src.core.file_ops import rename_file, delete_file, FileOperationError
+from src.core.file_ops import rename_file, delete_file, rotate_image, FileOperationError
 from src.core.file_model import ImageFile
 
 
@@ -67,22 +67,40 @@ class DupPicFinderApp:
         # When user selects a file in the tree
         self.file_tree.file_selected.connect(self._on_file_selected)
 
+        # When user requests save
+        self.main_window.save_requested.connect(self._on_save_requested)
+
         # When user requests rename
         self.main_window.rename_requested.connect(self._on_rename_requested)
 
         # When user requests delete
         self.main_window.delete_requested.connect(self._on_delete_requested)
 
+        # When user requests rotation
+        self.main_window.rotate_left_requested.connect(self._on_rotate_left_requested)
+        self.main_window.rotate_right_requested.connect(self._on_rotate_right_requested)
+
     def _setup_context_menu(self):
         """Set up the context menu for the file tree."""
         # Create context menu
         context_menu = QMenu(self.file_tree)
+
+        # Add save action
+        context_menu.addAction(self.main_window.save_action)
+
+        context_menu.addSeparator()
 
         # Add rename action (reuse the same action from main window)
         context_menu.addAction(self.main_window.rename_action)
 
         # Add delete action
         context_menu.addAction(self.main_window.delete_action)
+
+        context_menu.addSeparator()
+
+        # Add rotation actions
+        context_menu.addAction(self.main_window.rotate_left_action)
+        context_menu.addAction(self.main_window.rotate_right_action)
 
         # Set the context menu on the file tree
         self.file_tree.set_context_menu(context_menu)
@@ -129,6 +147,9 @@ class DupPicFinderApp:
 
         # Enable file actions (rename, delete, etc.)
         self.main_window.set_file_actions_enabled(True)
+
+        # Disable save action (will be enabled if file is modified)
+        self.main_window.set_save_enabled(False)
 
         # Show loading status and wait cursor
         self.main_window.update_status(f"Loading: {image_file.path.name}...")
@@ -270,6 +291,96 @@ class DupPicFinderApp:
                 f"Failed to delete file:\n\n{str(e)}",
             )
             self.main_window.update_status("Delete failed")
+
+    def _on_rotate_left_requested(self):
+        """Handle rotate left request."""
+        # Get the currently selected file
+        selected_file = self.file_tree.get_selected_file()
+        if not selected_file:
+            QMessageBox.warning(
+                self.main_window,
+                "No File Selected",
+                "Please select a file to rotate.",
+            )
+            return
+
+        self._perform_rotation(selected_file, 'left')
+
+    def _on_rotate_right_requested(self):
+        """Handle rotate right request."""
+        # Get the currently selected file
+        selected_file = self.file_tree.get_selected_file()
+        if not selected_file:
+            QMessageBox.warning(
+                self.main_window,
+                "No File Selected",
+                "Please select a file to rotate.",
+            )
+            return
+
+        self._perform_rotation(selected_file, 'right')
+
+    def _on_save_requested(self):
+        """Handle save file request."""
+        if not self.image_viewer.is_modified:
+            return
+
+        try:
+            # Save changes
+            if self.image_viewer.save_changes():
+                # Disable save action
+                self.main_window.set_save_enabled(False)
+
+                # Update status
+                self.main_window.update_status(f"Saved: {self.image_viewer.current_image_path.name}")
+            else:
+                QMessageBox.warning(
+                    self.main_window,
+                    "Save Failed",
+                    "Failed to save changes to the file.",
+                )
+                self.main_window.update_status("Save failed")
+
+        except Exception as e:
+            QMessageBox.critical(
+                self.main_window,
+                "Save Failed",
+                f"Failed to save file:\n\n{str(e)}",
+            )
+            self.main_window.update_status("Save failed")
+
+    def _perform_rotation(self, image_file: ImageFile, direction: str):
+        """Perform the actual image rotation operation (in-memory only).
+
+        Args:
+            image_file: ImageFile object to rotate
+            direction: 'left' or 'right'
+        """
+        try:
+            # Perform in-memory rotation
+            direction_name = "left" if direction == 'left' else "right"
+
+            if self.image_viewer.rotate(direction):
+                # Enable save action
+                self.main_window.set_save_enabled(True)
+
+                # Update status
+                self.main_window.update_status(f"Rotated {direction_name} (unsaved): {image_file.path.name}")
+            else:
+                QMessageBox.warning(
+                    self.main_window,
+                    "Rotation Failed",
+                    "Failed to rotate image.",
+                )
+                self.main_window.update_status("Rotation failed")
+
+        except Exception as e:
+            QMessageBox.critical(
+                self.main_window,
+                "Rotation Failed",
+                f"Failed to rotate image:\n\n{str(e)}",
+            )
+            self.main_window.update_status("Rotation failed")
 
     def run(self) -> int:
         """Run the application.

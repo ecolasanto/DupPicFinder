@@ -25,6 +25,9 @@ class ImageViewer(QWidget):
 
         self._current_image_path = None
         self._original_pixmap = None
+        self._original_pil_image = None  # Store original PIL image for rotation
+        self._rotation_degrees = 0  # Track cumulative rotation
+        self._is_modified = False  # Track if image has unsaved changes
 
         self._init_ui()
 
@@ -82,9 +85,12 @@ class ImageViewer(QWidget):
                 self._show_error(f"Failed to load: {path.name}")
                 return False
 
-            # Store original pixmap and path
+            # Store original pixmap, PIL image, and path
             self._original_pixmap = pixmap
+            self._original_pil_image = pil_image  # Keep PIL image for rotation
             self._current_image_path = path
+            self._rotation_degrees = 0  # Reset rotation
+            self._is_modified = False  # Reset modified flag
 
             # Scale and display
             self._display_scaled_image()
@@ -101,7 +107,10 @@ class ImageViewer(QWidget):
     def clear(self):
         """Clear the current image and show placeholder."""
         self._original_pixmap = None
+        self._original_pil_image = None
         self._current_image_path = None
+        self._rotation_degrees = 0
+        self._is_modified = False
         self.image_label.clear()
         self.image_label.setText("No image selected")
 
@@ -113,6 +122,101 @@ class ImageViewer(QWidget):
             Path object of current image, or None if no image is displayed
         """
         return self._current_image_path
+
+    @property
+    def is_modified(self):
+        """Check if the current image has unsaved changes.
+
+        Returns:
+            True if image has been modified, False otherwise
+        """
+        return self._is_modified
+
+    def rotate(self, direction: str):
+        """Rotate the current image in memory (not saved to disk).
+
+        Args:
+            direction: 'left' for counter-clockwise, 'right' for clockwise
+
+        Returns:
+            True if rotation succeeded, False otherwise
+        """
+        if self._original_pil_image is None:
+            return False
+
+        # Update rotation degrees
+        if direction == 'left':
+            self._rotation_degrees = (self._rotation_degrees + 90) % 360
+        elif direction == 'right':
+            self._rotation_degrees = (self._rotation_degrees - 90) % 360
+        else:
+            return False
+
+        # Mark as modified
+        self._is_modified = True
+
+        # Rotate the PIL image
+        rotated_pil = self._original_pil_image.rotate(
+            self._rotation_degrees,
+            expand=True
+        )
+
+        # Convert to QPixmap
+        import io
+        buffer = io.BytesIO()
+        rotated_pil.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        pixmap = QPixmap()
+        pixmap.loadFromData(buffer.read())
+
+        if pixmap.isNull():
+            return False
+
+        # Update the displayed pixmap
+        self._original_pixmap = pixmap
+
+        # Refresh display
+        self._display_scaled_image()
+
+        return True
+
+    def save_changes(self):
+        """Save the current rotation changes to disk.
+
+        Returns:
+            True if save succeeded, False otherwise
+        """
+        if not self._is_modified or self._current_image_path is None:
+            return False
+
+        try:
+            # Rotate the original PIL image
+            rotated = self._original_pil_image.rotate(
+                self._rotation_degrees,
+                expand=True
+            )
+
+            # Get the original format
+            original_format = self._original_pil_image.format or \
+                             self._current_image_path.suffix.lstrip('.').upper()
+
+            # Save with EXIF data if it existed
+            exif_data = self._original_pil_image.info.get('exif', None)
+            if exif_data:
+                rotated.save(self._current_image_path, format=original_format, exif=exif_data)
+            else:
+                rotated.save(self._current_image_path, format=original_format)
+
+            # Update the original PIL image to the rotated version
+            self._original_pil_image = rotated
+            self._rotation_degrees = 0
+            self._is_modified = False
+
+            return True
+
+        except Exception as e:
+            return False
 
     def _display_scaled_image(self):
         """Display the current image scaled to fit the widget."""

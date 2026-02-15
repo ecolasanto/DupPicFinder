@@ -2,9 +2,11 @@
 
 import pytest
 from pathlib import Path
+from PIL import Image
 from src.core.file_ops import (
     rename_file,
     delete_file,
+    rotate_image,
     FileNotFoundError,
     FileExistsError,
     InvalidFilenameError,
@@ -171,3 +173,110 @@ class TestDeleteFile:
             delete_file(directory)
 
         assert "not a file" in str(exc_info.value).lower()
+
+
+class TestRotateImage:
+    """Tests for rotate_image function."""
+
+    def _create_test_image(self, path, width=100, height=50, color='red'):
+        """Helper to create a test image."""
+        img = Image.new('RGB', (width, height), color=color)
+        img.save(path)
+        return img
+
+    def test_rotate_left(self, tmp_path):
+        """Test rotating an image 90 degrees counter-clockwise (left)."""
+        # Create a rectangular test image (100x50)
+        test_file = tmp_path / "test.jpg"
+        self._create_test_image(test_file, width=100, height=50)
+
+        # Rotate left
+        rotate_image(test_file, 'left')
+
+        # Verify rotation - dimensions should swap
+        rotated = Image.open(test_file)
+        assert rotated.size == (50, 100)  # width and height swapped
+        rotated.close()
+
+    def test_rotate_right(self, tmp_path):
+        """Test rotating an image 90 degrees clockwise (right)."""
+        # Create a rectangular test image (100x50)
+        test_file = tmp_path / "test.jpg"
+        self._create_test_image(test_file, width=100, height=50)
+
+        # Rotate right
+        rotate_image(test_file, 'right')
+
+        # Verify rotation - dimensions should swap
+        rotated = Image.open(test_file)
+        assert rotated.size == (50, 100)  # width and height swapped
+        rotated.close()
+
+    def test_rotate_with_string_path(self, tmp_path):
+        """Test rotation with string path instead of Path object."""
+        test_file = tmp_path / "test.png"
+        self._create_test_image(test_file, width=80, height=60)
+
+        # Pass string instead of Path
+        rotate_image(str(test_file), 'left')
+
+        rotated = Image.open(test_file)
+        assert rotated.size == (60, 80)
+        rotated.close()
+
+    def test_rotate_nonexistent_file(self, tmp_path):
+        """Test rotating a file that doesn't exist."""
+        nonexistent = tmp_path / "does_not_exist.jpg"
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            rotate_image(nonexistent, 'left')
+
+        assert "does not exist" in str(exc_info.value).lower()
+
+    def test_rotate_invalid_direction(self, tmp_path):
+        """Test rotating with invalid direction."""
+        test_file = tmp_path / "test.jpg"
+        self._create_test_image(test_file)
+
+        with pytest.raises(ValueError) as exc_info:
+            rotate_image(test_file, 'up')
+
+        assert "invalid direction" in str(exc_info.value).lower()
+
+    def test_rotate_directory_fails(self, tmp_path):
+        """Test that rotating a directory raises an error."""
+        directory = tmp_path / "subdir"
+        directory.mkdir()
+
+        with pytest.raises(InvalidFilenameError) as exc_info:
+            rotate_image(directory, 'left')
+
+        assert "not a file" in str(exc_info.value).lower()
+
+    def test_rotate_preserves_format(self, tmp_path):
+        """Test that rotation preserves the image format."""
+        # Test with PNG
+        png_file = tmp_path / "test.png"
+        self._create_test_image(png_file, width=40, height=30)
+
+        rotate_image(png_file, 'right')
+
+        # Verify file still exists and is valid PNG
+        rotated = Image.open(png_file)
+        assert rotated.format == 'PNG'
+        assert rotated.size == (30, 40)
+        rotated.close()
+
+    def test_rotate_full_circle(self, tmp_path):
+        """Test rotating 4 times returns to original orientation."""
+        test_file = tmp_path / "test.jpg"
+        self._create_test_image(test_file, width=100, height=50)
+
+        # Rotate right 4 times (360 degrees)
+        for _ in range(4):
+            rotate_image(test_file, 'right')
+
+        # Should be back to original size
+        rotated = Image.open(test_file)
+        assert rotated.size == (100, 50)
+        rotated.close()

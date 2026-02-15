@@ -23,8 +23,11 @@ class MainWindow(QMainWindow):
 
     # Signals
     directory_selected = pyqtSignal(Path)
+    save_requested = pyqtSignal()
     rename_requested = pyqtSignal()
     delete_requested = pyqtSignal()
+    rotate_left_requested = pyqtSignal()
+    rotate_right_requested = pyqtSignal()
 
     def __init__(self):
         """Initialize the main window."""
@@ -82,6 +85,16 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        # Save action
+        self.save_action = QAction("&Save", self)
+        self.save_action.setShortcut("Ctrl+S")
+        self.save_action.setStatusTip("Save changes to the current file")
+        self.save_action.triggered.connect(lambda: self.save_requested.emit())
+        self.save_action.setEnabled(False)  # Disabled until file is modified
+        file_menu.addAction(self.save_action)
+
+        file_menu.addSeparator()
+
         # Exit action
         exit_action = QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
@@ -107,6 +120,24 @@ class MainWindow(QMainWindow):
         self.delete_action.triggered.connect(lambda: self.delete_requested.emit())
         self.delete_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.delete_action)
+
+        edit_menu.addSeparator()
+
+        # Rotate Left action
+        self.rotate_left_action = QAction("Rotate &Left", self)
+        self.rotate_left_action.setShortcut("[")
+        self.rotate_left_action.setStatusTip("Rotate the image 90° counter-clockwise")
+        self.rotate_left_action.triggered.connect(lambda: self.rotate_left_requested.emit())
+        self.rotate_left_action.setEnabled(False)  # Disabled until file is selected
+        edit_menu.addAction(self.rotate_left_action)
+
+        # Rotate Right action
+        self.rotate_right_action = QAction("Rotate &Right", self)
+        self.rotate_right_action.setShortcut("]")
+        self.rotate_right_action.setStatusTip("Rotate the image 90° clockwise")
+        self.rotate_right_action.triggered.connect(lambda: self.rotate_right_requested.emit())
+        self.rotate_right_action.setEnabled(False)  # Disabled until file is selected
+        edit_menu.addAction(self.rotate_right_action)
 
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -222,3 +253,13 @@ class MainWindow(QMainWindow):
         """
         self.rename_action.setEnabled(enabled)
         self.delete_action.setEnabled(enabled)
+        self.rotate_left_action.setEnabled(enabled)
+        self.rotate_right_action.setEnabled(enabled)
+
+    def set_save_enabled(self, enabled: bool):
+        """Enable or disable the save action.
+
+        Args:
+            enabled: True to enable save, False to disable
+        """
+        self.save_action.setEnabled(enabled)

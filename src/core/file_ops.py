@@ -2,7 +2,8 @@
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
+from PIL import Image
 
 
 class FileOperationError(Exception):
@@ -124,3 +125,69 @@ def delete_file(file_path: Path) -> None:
             raise PermissionError(f"Permission denied: {file_path}") from e
         else:
             raise FileOperationError(f"Failed to delete file: {e}") from e
+
+
+def rotate_image(file_path: Path, direction: Literal['left', 'right']) -> None:
+    """Rotate an image 90 degrees and save it back to the file.
+
+    Args:
+        file_path: Path to the image file to rotate
+        direction: 'left' for counter-clockwise, 'right' for clockwise
+
+    Raises:
+        FileNotFoundError: If the file does not exist
+        PermissionError: If permission is denied
+        FileOperationError: If rotation fails for other reasons
+    """
+    # Convert to Path if string
+    if isinstance(file_path, str):
+        file_path = Path(file_path)
+
+    # Validate file exists
+    if not file_path.exists():
+        raise FileNotFoundError(f"File does not exist: {file_path}")
+
+    if not file_path.is_file():
+        raise InvalidFilenameError(f"Path is not a file: {file_path}")
+
+    # Validate direction
+    if direction not in ('left', 'right'):
+        raise ValueError(f"Invalid direction: {direction}. Must be 'left' or 'right'")
+
+    try:
+        # Open the image
+        image = Image.open(file_path)
+
+        # Preserve EXIF data if present
+        exif_data = image.info.get('exif', None)
+
+        # Rotate the image
+        # PIL's rotate is counter-clockwise, so:
+        # - Left (counter-clockwise) = 90 degrees
+        # - Right (clockwise) = -90 degrees (or 270)
+        if direction == 'left':
+            rotated = image.rotate(90, expand=True)
+        else:  # right
+            rotated = image.rotate(-90, expand=True)
+
+        # Save back to the same file
+        # Determine the format from the file extension
+        file_format = image.format or file_path.suffix.lstrip('.').upper()
+
+        # Save with EXIF data if it existed
+        if exif_data:
+            rotated.save(file_path, format=file_format, exif=exif_data)
+        else:
+            rotated.save(file_path, format=file_format)
+
+        # Close images
+        image.close()
+        rotated.close()
+
+    except OSError as e:
+        if e.errno == 13:  # Permission denied
+            raise PermissionError(f"Permission denied: {file_path}") from e
+        else:
+            raise FileOperationError(f"Failed to rotate image: {e}") from e
+    except Exception as e:
+        raise FileOperationError(f"Failed to rotate image: {e}") from e
