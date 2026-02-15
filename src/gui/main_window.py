@@ -142,6 +142,15 @@ class MainWindow(QMainWindow):
         # Help menu
         help_menu = menubar.addMenu("&Help")
 
+        # Keyboard Shortcuts action
+        shortcuts_action = QAction("&Keyboard Shortcuts", self)
+        shortcuts_action.setShortcut("F1")
+        shortcuts_action.setStatusTip("View keyboard shortcuts")
+        shortcuts_action.triggered.connect(self._on_shortcuts)
+        help_menu.addAction(shortcuts_action)
+
+        help_menu.addSeparator()
+
         # About action
         about_action = QAction("&About", self)
         about_action.setStatusTip("About DupPicFinder")
@@ -207,6 +216,12 @@ class MainWindow(QMainWindow):
             if directories:
                 directory = directories[0]
                 self.directory_selected.emit(Path(directory))
+
+    def _on_shortcuts(self):
+        """Handle Keyboard Shortcuts menu action."""
+        from src.gui.shortcuts_dialog import ShortcutsDialog
+        dialog = ShortcutsDialog(self)
+        dialog.exec_()
 
     def _on_about(self):
         """Handle About menu action."""
