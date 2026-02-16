@@ -224,3 +224,30 @@ class DuplicatesView(QWidget):
 
         # Show menu at cursor position
         menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+    def save_column_widths(self, settings_manager):
+        """Save column widths to settings.
+
+        Args:
+            settings_manager: SettingsManager instance
+        """
+        header = self.tree.header()
+        widths = [
+            header.sectionSize(0),
+            header.sectionSize(1),
+            header.sectionSize(2)
+        ]
+        settings_manager.save_duplicates_tree_columns(widths)
+
+    def restore_column_widths(self, settings_manager):
+        """Restore column widths from settings.
+
+        Args:
+            settings_manager: SettingsManager instance
+        """
+        widths = settings_manager.restore_duplicates_tree_columns()
+        if widths and len(widths) == 3:
+            header = self.tree.header()
+            header.resizeSection(0, widths[0])
+            header.resizeSection(1, widths[1])
+            header.resizeSection(2, widths[2])

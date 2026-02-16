@@ -175,13 +175,20 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready - Use Ctrl+O to open a directory, arrow keys to navigate")
 
-    def _on_open_directory(self):
-        """Handle Open Directory menu action."""
+    def _on_open_directory(self, start_dir=None):
+        """Handle Open Directory menu action.
+
+        Args:
+            start_dir: Optional starting directory path
+        """
         from pathlib import Path as PathLib
         from PyQt5.QtWidgets import QPushButton, QLabel, QVBoxLayout, QDialog
 
-        # Start in user's home directory
-        start_dir = str(PathLib.home())
+        # Start in specified directory or user's home directory
+        if start_dir is None:
+            start_dir = str(PathLib.home())
+        else:
+            start_dir = str(start_dir)
 
         # Create a custom dialog with a "Use This Folder" button
         dialog = QFileDialog(self)
@@ -298,3 +305,39 @@ class MainWindow(QMainWindow):
             enabled: True to enable, False to disable
         """
         self.find_duplicates_action.setEnabled(enabled)
+
+    def save_settings(self, settings_manager):
+        """Save window settings.
+
+        Args:
+            settings_manager: SettingsManager instance
+        """
+        # Save window geometry (size and position)
+        settings_manager.save_window_geometry(self.saveGeometry())
+
+        # Save window state (toolbars, dockwidgets, etc.)
+        settings_manager.save_window_state(self.saveState())
+
+        # Save splitter sizes
+        settings_manager.save_splitter_sizes(self.splitter.sizes())
+
+    def restore_settings(self, settings_manager):
+        """Restore window settings.
+
+        Args:
+            settings_manager: SettingsManager instance
+        """
+        # Restore window geometry
+        geometry = settings_manager.restore_window_geometry()
+        if geometry:
+            self.restoreGeometry(geometry)
+
+        # Restore window state
+        state = settings_manager.restore_window_state()
+        if state:
+            self.restoreState(state)
+
+        # Restore splitter sizes
+        sizes = settings_manager.restore_splitter_sizes()
+        if sizes:
+            self.splitter.setSizes(sizes)

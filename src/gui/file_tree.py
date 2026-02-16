@@ -221,3 +221,30 @@ class FileTreeWidget(QTreeWidget):
         if self.get_selected_file() and self.context_menu:
             # Show the menu at the cursor position
             self.context_menu.exec_(self.viewport().mapToGlobal(position))
+
+    def save_column_widths(self, settings_manager):
+        """Save column widths to settings.
+
+        Args:
+            settings_manager: SettingsManager instance
+        """
+        header = self.header()
+        widths = [
+            header.sectionSize(self.COL_FILENAME),
+            header.sectionSize(self.COL_SIZE),
+            header.sectionSize(self.COL_DATE)
+        ]
+        settings_manager.save_file_tree_columns(widths)
+
+    def restore_column_widths(self, settings_manager):
+        """Restore column widths from settings.
+
+        Args:
+            settings_manager: SettingsManager instance
+        """
+        widths = settings_manager.restore_file_tree_columns()
+        if widths and len(widths) == 3:
+            header = self.header()
+            header.resizeSection(self.COL_FILENAME, widths[0])
+            header.resizeSection(self.COL_SIZE, widths[1])
+            header.resizeSection(self.COL_DATE, widths[2])

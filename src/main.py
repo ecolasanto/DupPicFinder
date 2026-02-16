@@ -33,6 +33,7 @@ from src.core.duplicate_finder import DuplicateFinder
 from src.core.file_ops import rename_file, delete_file, rotate_image, FileOperationError
 from src.core.file_model import ImageFile
 from src.utils.export import export_duplicates_to_file
+from src.utils.settings import SettingsManager
 
 
 class DupPicFinderApp:
@@ -46,6 +47,9 @@ class DupPicFinderApp:
         # Create QApplication
         self.app = QApplication(sys.argv)
         self.app.setApplicationName("DupPicFinder")
+
+        # Create settings manager
+        self.settings_manager = SettingsManager()
 
         # Create components
         self.scanner = DirectoryScanner()
@@ -85,8 +89,27 @@ class DupPicFinderApp:
         # Show the main window
         self.main_window.show()
 
+        # Restore settings after UI is set up
+        self._restore_settings()
+
+        # Connect close event to save settings
+        self.app.aboutToQuit.connect(self._save_settings)
+
     def _connect_signals(self):
         """Connect signals between components."""
+        # Connect Open Directory action to use last directory
+        # Disconnect default connection first
+        try:
+            self.main_window.findChild(QAction, None).triggered.disconnect()
+        except:
+            pass  # No existing connection
+
+        # When user clicks Open Directory, pass last directory
+        for action in self.main_window.menuBar().findChildren(QAction):
+            if action.text() == "&Open Directory...":
+                action.triggered.connect(self._on_open_directory_action)
+                break
+
         # When user selects a directory
         self.main_window.directory_selected.connect(self._on_directory_selected)
 
@@ -121,6 +144,11 @@ class DupPicFinderApp:
             lambda path: self._on_file_selected_from_duplicates(path, switch_to_viewer=True)
         )
 
+    def _on_open_directory_action(self):
+        """Handle Open Directory action with last directory."""
+        last_dir = self.settings_manager.restore_last_directory()
+        self.main_window._on_open_directory(last_dir)
+
     def _setup_context_menu(self):
         """Set up the context menu for the file tree."""
         # Create context menu
@@ -152,6 +180,9 @@ class DupPicFinderApp:
         Args:
             directory: Path to the selected directory
         """
+        # Save last directory for next time
+        self.settings_manager.save_last_directory(directory)
+
         # Clear all views when opening a new directory
         self.image_viewer.clear()
         self.duplicates_view.clear()
@@ -765,6 +796,35 @@ class DupPicFinderApp:
                 f"Failed to export duplicates:\n\n{str(e)}",
             )
             self.main_window.update_status("Export failed")
+
+    def _save_settings(self):
+        """Save application settings before exit."""
+        # Save window geometry and state
+        self.main_window.save_settings(self.settings_manager)
+
+        # Save column widths
+        self.file_tree.save_column_widths(self.settings_manager)
+        self.duplicates_view.save_column_widths(self.settings_manager)
+
+        # Save last active tab
+        current_tab = self.tabbed_panel.tabs.currentIndex()
+        self.settings_manager.save_last_tab(current_tab)
+
+    def _restore_settings(self):
+        """Restore application settings on startup."""
+        # Restore window geometry and state
+        self.main_window.restore_settings(self.settings_manager)
+
+        # Restore column widths
+        self.file_tree.restore_column_widths(self.settings_manager)
+        self.duplicates_view.restore_column_widths(self.settings_manager)
+
+        # Restore last active tab
+        last_tab = self.settings_manager.restore_last_tab()
+        if last_tab == 1:
+            self.tabbed_panel.show_duplicates()
+        else:
+            self.tabbed_panel.show_image_viewer()
 
     def run(self) -> int:
         """Run the application.
