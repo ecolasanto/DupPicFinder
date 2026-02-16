@@ -23,6 +23,8 @@ class DirectoryScanner:
         self._error_count = 0
         self._permission_errors = 0
         self._network_errors = 0
+        self._format_counts = {}  # Track counts by file format
+        self._total_size = 0  # Track total size of found files
 
     def scan(
         self,
@@ -55,6 +57,8 @@ class DirectoryScanner:
         self._error_count = 0
         self._permission_errors = 0
         self._network_errors = 0
+        self._format_counts = {}
+        self._total_size = 0
 
         # Collect all image files
         image_files = []
@@ -91,6 +95,10 @@ class DirectoryScanner:
                             img_file = self._process_file(file_path)
                             if img_file:
                                 self._found_count += 1
+                                # Track format and size statistics
+                                fmt = img_file.format.upper()
+                                self._format_counts[fmt] = self._format_counts.get(fmt, 0) + 1
+                                self._total_size += img_file.size
                                 yield img_file
                         except PermissionError:
                             # Track permission errors
@@ -116,6 +124,10 @@ class DirectoryScanner:
                                 img_file = self._process_file(item)
                                 if img_file:
                                     self._found_count += 1
+                                    # Track format and size statistics
+                                    fmt = img_file.format.upper()
+                                    self._format_counts[fmt] = self._format_counts.get(fmt, 0) + 1
+                                    self._total_size += img_file.size
                                     yield img_file
                             except PermissionError:
                                 # Track permission errors
@@ -204,3 +216,48 @@ class DirectoryScanner:
             parts.append(f"{other_errors} other errors")
 
         return f"⚠️  {self._error_count} files skipped: {', '.join(parts)}"
+
+    def get_format_breakdown(self) -> Dict[str, int]:
+        """Get the breakdown of files by format.
+
+        Returns:
+            Dictionary mapping format names to counts
+        """
+        return self._format_counts.copy()
+
+    def get_format_summary(self) -> str:
+        """Get a human-readable summary of file formats.
+
+        Returns:
+            Format summary string (e.g., "50 JPG, 30 PNG, 20 GIF")
+        """
+        if not self._format_counts:
+            return "No files"
+
+        # Sort by count (descending) then by format name
+        sorted_formats = sorted(
+            self._format_counts.items(),
+            key=lambda x: (-x[1], x[0])
+        )
+
+        # Format as "count format"
+        parts = [f"{count} {fmt}" for fmt, count in sorted_formats]
+        return ", ".join(parts)
+
+    def get_average_file_size(self) -> float:
+        """Get the average file size in bytes.
+
+        Returns:
+            Average file size, or 0 if no files
+        """
+        if self._found_count == 0:
+            return 0.0
+        return self._total_size / self._found_count
+
+    def get_total_size(self) -> int:
+        """Get the total size of all found files.
+
+        Returns:
+            Total size in bytes
+        """
+        return self._total_size

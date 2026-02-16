@@ -203,7 +203,7 @@ class DupPicFinderApp:
         self.scan_worker.file_found.connect(self._on_file_found)
         self.scan_worker.scan_progress.connect(progress_dialog.update_progress)
         self.scan_worker.scan_complete.connect(
-            lambda scanned, found: self._on_scan_complete(progress_dialog, scanned, found)
+            lambda scanned, found, elapsed: self._on_scan_complete(progress_dialog, scanned, found, elapsed)
         )
         self.scan_worker.scan_error.connect(
             lambda error: self._on_scan_error(progress_dialog, error)
@@ -227,13 +227,14 @@ class DupPicFinderApp:
         # Accumulate files (we'll load them all at once when complete)
         self.scanned_files.append(image_file)
 
-    def _on_scan_complete(self, progress_dialog: ScanProgressDialog, scanned: int, found: int):
+    def _on_scan_complete(self, progress_dialog: ScanProgressDialog, scanned: int, found: int, elapsed: float):
         """Handle scan completion.
 
         Args:
             progress_dialog: Progress dialog to update
             scanned: Total files scanned
             found: Total image files found
+            elapsed: Elapsed time in seconds
         """
         # Update progress dialog
         progress_dialog.set_complete(scanned, found)
@@ -245,12 +246,22 @@ class DupPicFinderApp:
         if found > 0:
             self.main_window.set_find_duplicates_enabled(True)
 
-        # Update status bar with error info if any
+        # Build status message with performance stats
+        files_per_sec = scanned / elapsed if elapsed > 0 else 0
+        format_summary = self.scanner.get_format_summary()
         error_summary = self.scanner.get_error_summary()
+
+        # Create comprehensive status message
+        parts = []
+        parts.append(f"Found {found} images")
+        parts.append(f"({format_summary})")
+        parts.append(f"in {elapsed:.1f}s")
+        parts.append(f"({files_per_sec:.0f} files/sec)")
+
         if error_summary:
-            message = f"Found {found} images (scanned {scanned} files). {error_summary}"
-        else:
-            message = f"Found {found} images (scanned {scanned} files)"
+            parts.append(error_summary)
+
+        message = " ".join(parts)
         self.main_window.update_status(message)
 
         # Close progress dialog
@@ -603,7 +614,7 @@ class DupPicFinderApp:
         )
         self.hash_worker.hash_progress.connect(progress_dialog.update_progress)
         self.hash_worker.hash_complete.connect(
-            lambda count: self._on_hash_complete(progress_dialog, count)
+            lambda count, elapsed: self._on_hash_complete(progress_dialog, count, elapsed)
         )
         self.hash_worker.hash_error.connect(
             lambda error: self._on_hash_error(progress_dialog, error)
@@ -618,12 +629,13 @@ class DupPicFinderApp:
         # Show progress dialog (blocks until closed)
         progress_dialog.exec_()
 
-    def _on_hash_complete(self, progress_dialog: HashProgressDialog, hashed_count: int):
+    def _on_hash_complete(self, progress_dialog: HashProgressDialog, hashed_count: int, elapsed: float):
         """Handle hash completion.
 
         Args:
             progress_dialog: Progress dialog to update
             hashed_count: Number of files hashed
+            elapsed: Elapsed time in seconds
         """
         # Update progress dialog
         progress_dialog.set_complete(hashed_count)
@@ -634,6 +646,9 @@ class DupPicFinderApp:
         # Close progress dialog
         progress_dialog.accept()
 
+        # Calculate performance metrics
+        files_per_sec = hashed_count / elapsed if elapsed > 0 else 0
+
         # Show results
         if duplicates:
             # Load duplicates into the duplicates view
@@ -642,10 +657,11 @@ class DupPicFinderApp:
             # Switch to duplicates tab
             self.tabbed_panel.show_duplicates()
 
-            # Update status
+            # Update status with performance info
             self.main_window.update_status(
                 f"Found {len(duplicates)} duplicate groups "
-                f"({self.duplicate_finder.get_duplicate_count()} duplicate files)"
+                f"({self.duplicate_finder.get_duplicate_count()} duplicate files) "
+                f"in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)"
             )
 
             # Show info message
@@ -654,16 +670,18 @@ class DupPicFinderApp:
                 "Duplicates Found",
                 f"Found {len(duplicates)} groups of duplicate files.\n\n"
                 f"Total duplicate files: {self.duplicate_finder.get_duplicate_count()}\n"
+                f"Hashing completed in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)\n\n"
                 f"View them in the 'Duplicates' tab.\n"
                 f"Click any file path to view and manage it.",
             )
         else:
             # No duplicates found
-            self.main_window.update_status("No duplicates found")
+            self.main_window.update_status(f"No duplicates found (scanned in {elapsed:.1f}s)")
             QMessageBox.information(
                 self.main_window,
                 "No Duplicates",
-                "No duplicate files were found in the scanned images.",
+                f"No duplicate files were found in the scanned images.\n\n"
+                f"Hashing completed in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)",
             )
 
     def _on_hash_error(self, progress_dialog: HashProgressDialog, error_message: str):

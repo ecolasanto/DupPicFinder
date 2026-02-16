@@ -1,6 +1,7 @@
 """Background worker thread for hashing files with multi-threading support."""
 
 import os
+import time
 from pathlib import Path
 from typing import List
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,7 +27,7 @@ class HashWorker(QThread):
     # Signals
     file_hashed = pyqtSignal(Path, str)  # (file_path, hash)
     hash_progress = pyqtSignal(int, int)  # (hashed_count, total_count)
-    hash_complete = pyqtSignal(int)  # total_hashed
+    hash_complete = pyqtSignal(int, float)  # (total_hashed, elapsed_seconds)
     hash_error = pyqtSignal(str)  # error_message
 
     def __init__(self, image_files: List[ImageFile], algorithm: HashAlgorithm = 'md5', max_workers: int = None):
@@ -57,6 +58,9 @@ class HashWorker(QThread):
         using a ThreadPoolExecutor and emits signals as it progresses.
         """
         try:
+            # Start timing
+            start_time = time.time()
+
             total_files = len(self.image_files)
             hashed_count = 0
 
@@ -95,8 +99,11 @@ class HashWorker(QThread):
                     # Emit progress update
                     self.hash_progress.emit(hashed_count, total_files)
 
-            # Emit completion signal
-            self.hash_complete.emit(hashed_count)
+            # Calculate elapsed time
+            elapsed_time = time.time() - start_time
+
+            # Emit completion signal with timing
+            self.hash_complete.emit(hashed_count, elapsed_time)
 
         except Exception as e:
             # Emit error signal

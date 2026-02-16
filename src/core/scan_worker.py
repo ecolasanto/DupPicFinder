@@ -1,5 +1,6 @@
 """Background worker thread for directory scanning."""
 
+import time
 from pathlib import Path
 from typing import Union
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -24,7 +25,7 @@ class ScanWorker(QThread):
     # Signals
     file_found = pyqtSignal(ImageFile)  # Single image file found
     scan_progress = pyqtSignal(int, int)  # (scanned_count, found_count)
-    scan_complete = pyqtSignal(int, int)  # (total_scanned, total_found)
+    scan_complete = pyqtSignal(int, int, float)  # (total_scanned, total_found, elapsed_seconds)
     scan_error = pyqtSignal(str)  # Error message
 
     def __init__(self, root_path: Union[str, Path], recursive: bool = True):
@@ -47,6 +48,9 @@ class ScanWorker(QThread):
         directory scan and emits signals as files are found.
         """
         try:
+            # Start timing
+            start_time = time.time()
+
             # Validate root path
             if not self.root_path.exists():
                 self.scan_error.emit(f"Path does not exist: {self.root_path}")
@@ -77,9 +81,12 @@ class ScanWorker(QThread):
                     stats = self.scanner.get_stats()
                     self.scan_progress.emit(stats['scanned'], stats['found'])
 
-            # Emit final completion signal
+            # Calculate elapsed time
+            elapsed_time = time.time() - start_time
+
+            # Emit final completion signal with timing
             stats = self.scanner.get_stats()
-            self.scan_complete.emit(stats['scanned'], stats['found'])
+            self.scan_complete.emit(stats['scanned'], stats['found'], elapsed_time)
 
         except Exception as e:
             # Emit error signal
