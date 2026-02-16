@@ -452,17 +452,88 @@
 
 ---
 
-## Phase 5: Performance & Polish (PLANNED)
+## Phase 5: Performance & Polish 🚧 IN PROGRESS
 
-**Target Features**:
-- Large dataset optimization (~1TB test)
-- Database caching for hash results
-- Pagination for file lists
-- Memory profiling and optimization
+**Status**: 4 of 5 priorities completed (2026-02-16)
+**Completion**: 80%
+
+### Completed Features
+
+#### 1. Multi-threaded Hash Computation ✅ (Priority 1)
+- [x] Parallel file hashing using ThreadPoolExecutor
+- [x] Auto-detect optimal thread count (CPU cores, capped at 8)
+- [x] Process multiple files simultaneously on multi-core systems
+- [x] Maintain UI responsiveness and cancellation support
+- [x] Expected speedup: 2-3x on 100+ files, 4-8x on 1,000+ files
+- [x] Benchmark script: `benchmark_threading.py`
+
+#### 2. Settings Persistence ✅ (Priority 2)
+- [x] Window geometry (size and position) saved/restored
+- [x] Window state (splitter positions) remembered
+- [x] Column widths (file tree and duplicates tree) persist
+- [x] Last opened directory remembered
+- [x] Last active tab (Image Viewer vs Duplicates) persists
+- [x] User preferences (hash algorithm, thread count)
+- [x] Platform-native storage (~/.config/DupPicFinder/ on Linux)
+- [x] 16 comprehensive tests for all settings features
+
+#### 3. Enhanced Error Handling ✅ (Priority 3)
+- [x] Corrupted images: Specific detection and messaging
+- [x] Permission errors: Clear "Cannot read" messages
+- [x] Network timeouts: Slow/unreachable network paths
+- [x] Disk full errors: Space issues during save operations
+- [x] I/O errors: Hardware/corruption issue detection
+- [x] Memory errors: Images too large to load/rotate
+- [x] Error tracking: Count permission, network, and other errors
+- [x] Error reporting: Show summary in status bar after scan
+- [x] Graceful degradation: Continue when individual files fail
+
+#### 4. Performance Monitoring & Statistics ✅ (Priority 4)
+- [x] Scan timing: Track and display scan duration
+- [x] Hash timing: Track and display hash computation duration
+- [x] Throughput metrics: Show files/sec for both operations
+- [x] Format breakdown: Count files by type (JPG, PNG, GIF, etc.)
+- [x] Format summary: Display in status bar (e.g., "50 JPG, 30 PNG")
+- [x] Total size tracking: Track cumulative size of found files
+- [x] Average file size: Calculate and store average
+- [x] Enhanced status messages with comprehensive stats
+
+### Remaining Features
+
+#### 5. Final UI Polish ⏳ (Priority 5) - TODO
+- [ ] Tooltips on all buttons and actions
+- [ ] Better status bar messages refinements
+- [ ] File count in window title
+- [ ] Confirmation before closing with unsaved changes
+- [ ] Additional keyboard shortcut hints
+- [ ] Icon improvements (if applicable)
+- [ ] Final visual refinements
+
+### Build Structure Improvements ✅
+- [x] Restructured packaging directory
+- [x] `dist/` contains ONLY build artifacts
+- [x] `packaging/` contains build configuration
+- [x] Both builds output to `dist/` with distinct names:
+  - `dist/DupPicFinder` (native build)
+  - `dist/DupPicFinder-ubuntu-20.04` (Docker build)
+- [x] No more accidental deletion of build configs
+- [x] `build-docker.sh` wrapper script for convenience
+
+### Test Summary
+
+**Total Tests**: 208
+**Passing**: 208 (100%)
+**Coverage**: Core modules at 95%+
+
+### Commits Today
 - Multi-threaded hash computation
-- UI polish and refinements
+- Build structure reorganization
+- Settings persistence implementation
+- Enhanced error handling
+- Performance monitoring and statistics
+- Column resize fixes
 
-**Estimated Effort**: 6-8 hours
+**Estimated Remaining Effort**: 1-2 hours (Priority 5 only)
 
 ---
 
