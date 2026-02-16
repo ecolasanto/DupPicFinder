@@ -1,0 +1,74 @@
+DupPicFinder - Ubuntu 20.04 Build
+===================================
+
+Version: 1.1.0
+Build Target: Ubuntu 20.04 LTS (GLIBC 2.31)
+Build Method: Docker
+Build Date: 2026-02-16 10:39
+
+TARGET SYSTEM COMPATIBILITY
+----------------------------
+This executable is built to run on:
+- Ubuntu 20.04 LTS or newer
+- Debian 11 or newer
+- Linux Mint 20 or newer
+- Any Linux with GLIBC 2.31+
+
+GLIBC 2.31 was released in 2020 and provides excellent
+compatibility with most modern Linux distributions.
+
+FEATURES (v1.1.0)
+-----------------
+✨ 10 image formats supported
+✨ HEIC/HEIF support (Apple photos)
+✨ WEBP support (modern web format)
+✨ TIFF/TIF support (professional format)
+✨ Hash-based duplicate detection
+✨ Export duplicates to file
+✨ Tabbed interface
+✨ Context menus
+✨ 192 tests passing
+
+TECHNICAL DETAILS
+-----------------
+Built with:
+- Python 3.12.3 (compiled from source with --enable-shared)
+- PyQt5 5.15.10
+- Pillow 10.2.0
+- pillow-heif 0.13.1
+- PyInstaller 6.19.0
+
+Build environment:
+- OS: Ubuntu 20.04 LTS (Docker container)
+- GLIBC: 2.31
+- Kernel: 5.4 (compatible with older kernels)
+
+COMPARISON WITH OTHER BUILDS
+-----------------------------
+Native Build (../.. i.e. dist/):
+  Platform: Linux Mint 22.2
+  GLIBC:    2.39
+  Use for:  Your own system
+
+Docker Build (this directory):
+  Platform: Ubuntu 20.04
+  GLIBC:    2.31
+  Use for:  Distribution to others
+
+BUILDING
+--------
+To build this version:
+
+  ./build.sh
+
+Time: 10-15 minutes (first build)
+      2-3 minutes (subsequent builds with Docker cache)
+
+DISTRIBUTION
+------------
+After building, distribute:
+- Just the DupPicFinder executable
+- Or create a tarball with README.txt and INSTALL.txt
+
+Recommended filename:
+  DupPicFinder-v1.1.0-ubuntu2004-x64.tar.gz

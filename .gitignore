@@ -6,7 +6,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -50,3 +49,8 @@ htmlcov/
 # Project specific
 test_data/large_dataset/
 *.log
+
+# Distribution executables (ignore binaries, keep documentation)
+dist/DupPicFinder
+dist/dockerBuild/*/DupPicFinder
+dist/dockerBuild/*/*.tar.gz

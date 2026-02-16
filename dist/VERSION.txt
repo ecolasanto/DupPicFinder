@@ -1,0 +1,52 @@
+DupPicFinder - Version Information
+====================================
+
+Version: 1.1.0
+Build Date: 2026-02-16
+Executable Size: 58 MB
+
+WHAT'S NEW IN v1.1.0:
+---------------------
+
+✨ New Features:
+- Added WEBP format support (modern web format)
+- Added TIFF/TIF format support (professional/archival)
+- Fixed HEIC/HEIF loading (was broken, now works)
+- Enhanced error messages for unsupported formats
+
+📊 Format Support:
+- Now supports 10 image format extensions
+- JPG/JPEG, PNG, GIF, BMP, HEIC/HEIF, WEBP, TIFF/TIF
+- All formats fully tested and verified
+
+🧪 Testing:
+- 192 tests passing (up from 170)
+- 100% format support test coverage
+- All formats verified working
+
+PREVIOUS VERSIONS:
+------------------
+
+v1.0.0 (2026-02-15):
+- Initial release
+- Directory scanning with progress
+- Image viewing and management
+- Hash-based duplicate detection
+- Export to text file
+- Tabbed interface
+- 170 tests passing
+
+SYSTEM REQUIREMENTS:
+-------------------
+- Linux x86_64
+- No Python or dependencies required
+- Self-contained executable
+
+TECHNICAL DETAILS:
+-----------------
+- Built with PyInstaller 6.19.0
+- Python 3.12.3
+- PyQt5 5.15.10
+- Pillow 10.2.0
+- pillow-heif for HEIC support
+- Single-file executable (no installation needed)

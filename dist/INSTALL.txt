@@ -1,0 +1,59 @@
+DupPicFinder - Installation Instructions
+==========================================
+
+QUICK START:
+-----------
+1. Copy the "DupPicFinder" executable to your desired location
+   (e.g., ~/Applications/ or ~/bin/)
+
+2. Make it executable:
+   chmod +x DupPicFinder
+
+3. Run it:
+   ./DupPicFinder
+
+
+DESKTOP SHORTCUT (OPTIONAL):
+----------------------------
+1. Edit DupPicFinder.desktop file
+2. Replace "/path/to/DupPicFinder" with the actual path where you placed the executable
+   Example: /home/username/Applications/DupPicFinder
+
+3. Copy to your desktop or applications folder:
+   cp DupPicFinder.desktop ~/Desktop/
+   OR
+   cp DupPicFinder.desktop ~/.local/share/applications/
+
+4. Make it executable:
+   chmod +x ~/Desktop/DupPicFinder.desktop
+
+
+REQUIREMENTS:
+------------
+- Linux operating system
+- No Python installation required
+- No additional dependencies needed
+
+
+USAGE:
+------
+1. Launch DupPicFinder
+2. File → Open Directory (or Ctrl+O) to select a folder with images
+3. Browse images in the Image Viewer tab
+4. Tools → Find Duplicates (or Ctrl+D) to scan for duplicates
+5. Switch to Duplicates tab to review and manage duplicates
+6. Right-click on files to View, Rename, or Delete
+
+
+FEATURES:
+---------
+✓ Image viewing and browsing
+✓ Rotate images (Edit menu or [ ] keys)
+✓ Rename and delete files
+✓ Hash-based duplicate detection (MD5/SHA256)
+✓ Export duplicate list to text file
+✓ Supports 10 image formats: JPG/JPEG, PNG, GIF, BMP, HEIC/HEIF, WEBP, TIFF/TIF
+
+
+For more information, visit:
+https://github.com/yourusername/DupPicFinder (update with actual URL)

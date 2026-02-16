@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=DupPicFinder
+Comment=Find and manage duplicate images
+Exec=/path/to/DupPicFinder
+Icon=folder-pictures
+Terminal=false
+Type=Application
+Categories=Graphics;Utility;
