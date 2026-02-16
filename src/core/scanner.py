@@ -20,6 +20,9 @@ class DirectoryScanner:
         """Initialize the DirectoryScanner."""
         self._scanned_count = 0
         self._found_count = 0
+        self._error_count = 0
+        self._permission_errors = 0
+        self._network_errors = 0
 
     def scan(
         self,
@@ -49,6 +52,9 @@ class DirectoryScanner:
         # Reset counters
         self._scanned_count = 0
         self._found_count = 0
+        self._error_count = 0
+        self._permission_errors = 0
+        self._network_errors = 0
 
         # Collect all image files
         image_files = []
@@ -86,8 +92,16 @@ class DirectoryScanner:
                             if img_file:
                                 self._found_count += 1
                                 yield img_file
-                        except (OSError, PermissionError):
-                            # Skip files we can't access
+                        except PermissionError:
+                            # Track permission errors
+                            self._error_count += 1
+                            self._permission_errors += 1
+                            continue
+                        except OSError as e:
+                            # Track network and other OS errors
+                            self._error_count += 1
+                            if e.errno in (5, 116):  # EIO, ESTALE
+                                self._network_errors += 1
                             continue
         else:
             # Non-recursive: only scan immediate children
@@ -103,12 +117,21 @@ class DirectoryScanner:
                                 if img_file:
                                     self._found_count += 1
                                     yield img_file
-                            except (OSError, PermissionError):
-                                # Skip files we can't access
+                            except PermissionError:
+                                # Track permission errors
+                                self._error_count += 1
+                                self._permission_errors += 1
+                                continue
+                            except OSError as e:
+                                # Track network and other OS errors
+                                self._error_count += 1
+                                if e.errno in (5, 116):  # EIO, ESTALE
+                                    self._network_errors += 1
                                 continue
             except PermissionError:
-                # Can't read directory
-                pass
+                # Can't read directory - track it
+                self._error_count += 1
+                self._permission_errors += 1
 
     def _process_file(self, file_path: Path) -> Union[ImageFile, None]:
         """Process a single file and create an ImageFile object.
@@ -151,9 +174,33 @@ class DirectoryScanner:
         """Get scanning statistics.
 
         Returns:
-            Dictionary with 'scanned' and 'found' counts
+            Dictionary with scan statistics including errors
         """
         return {
             'scanned': self._scanned_count,
-            'found': self._found_count
+            'found': self._found_count,
+            'errors': self._error_count,
+            'permission_errors': self._permission_errors,
+            'network_errors': self._network_errors
         }
+
+    def get_error_summary(self) -> str:
+        """Get a human-readable summary of errors encountered.
+
+        Returns:
+            Error summary string, or empty string if no errors
+        """
+        if self._error_count == 0:
+            return ""
+
+        parts = []
+        if self._permission_errors > 0:
+            parts.append(f"{self._permission_errors} permission denied")
+        if self._network_errors > 0:
+            parts.append(f"{self._network_errors} network errors")
+
+        other_errors = self._error_count - self._permission_errors - self._network_errors
+        if other_errors > 0:
+            parts.append(f"{other_errors} other errors")
+
+        return f"⚠️  {self._error_count} files skipped: {', '.join(parts)}"

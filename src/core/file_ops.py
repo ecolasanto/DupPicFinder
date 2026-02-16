@@ -31,6 +31,16 @@ class PermissionError(FileOperationError):
     pass
 
 
+class DiskFullError(FileOperationError):
+    """Raised when the disk is full and cannot save the file."""
+    pass
+
+
+class NetworkError(FileOperationError):
+    """Raised when a network-related error occurs."""
+    pass
+
+
 def rename_file(old_path: Path, new_name: str) -> Path:
     """Rename a file to a new name in the same directory.
 
@@ -89,10 +99,16 @@ def rename_file(old_path: Path, new_name: str) -> Path:
         old_path.rename(new_path)
         return new_path
     except OSError as e:
-        if e.errno == 13:  # Permission denied
-            raise PermissionError(f"Permission denied: {old_path}") from e
+        if e.errno == 13:  # EACCES - Permission denied
+            raise PermissionError(f"Permission denied: Cannot rename {old_path.name}") from e
+        elif e.errno == 28:  # ENOSPC - No space left on device
+            raise DiskFullError(f"Cannot rename: Disk full") from e
+        elif e.errno == 30:  # EROFS - Read-only file system
+            raise PermissionError(f"Cannot rename: File system is read-only") from e
+        elif e.errno in (5, 116):  # EIO, ESTALE - Network errors
+            raise NetworkError(f"Network error renaming {old_path.name}") from e
         else:
-            raise FileOperationError(f"Failed to rename file: {e}") from e
+            raise FileOperationError(f"Failed to rename {old_path.name}: {e}") from e
 
 
 def delete_file(file_path: Path) -> None:
@@ -121,10 +137,16 @@ def delete_file(file_path: Path) -> None:
     try:
         file_path.unlink()
     except OSError as e:
-        if e.errno == 13:  # Permission denied
-            raise PermissionError(f"Permission denied: {file_path}") from e
+        if e.errno == 13:  # EACCES - Permission denied
+            raise PermissionError(f"Permission denied: Cannot delete {file_path.name}") from e
+        elif e.errno == 30:  # EROFS - Read-only file system
+            raise PermissionError(f"Cannot delete: File system is read-only") from e
+        elif e.errno in (5, 116):  # EIO, ESTALE - Network errors
+            raise NetworkError(f"Network error deleting {file_path.name}") from e
+        elif e.errno == 16:  # EBUSY - Device or resource busy
+            raise FileOperationError(f"Cannot delete: File is in use by another program") from e
         else:
-            raise FileOperationError(f"Failed to delete file: {e}") from e
+            raise FileOperationError(f"Failed to delete {file_path.name}: {e}") from e
 
 
 def rotate_image(file_path: Path, direction: Literal['left', 'right']) -> None:
@@ -185,9 +207,19 @@ def rotate_image(file_path: Path, direction: Literal['left', 'right']) -> None:
         rotated.close()
 
     except OSError as e:
-        if e.errno == 13:  # Permission denied
-            raise PermissionError(f"Permission denied: {file_path}") from e
+        if e.errno == 13:  # EACCES - Permission denied
+            raise PermissionError(f"Permission denied: Cannot save rotated {file_path.name}") from e
+        elif e.errno == 28:  # ENOSPC - No space left on device
+            raise DiskFullError(f"Cannot save rotation: Disk full") from e
+        elif e.errno == 30:  # EROFS - Read-only file system
+            raise PermissionError(f"Cannot save: File system is read-only") from e
+        elif e.errno in (5, 116):  # EIO, ESTALE - Network errors
+            raise NetworkError(f"Network error saving {file_path.name}") from e
         else:
-            raise FileOperationError(f"Failed to rotate image: {e}") from e
+            raise FileOperationError(f"Failed to rotate {file_path.name}: {e}") from e
+    except MemoryError:
+        raise FileOperationError(f"Image too large to rotate: {file_path.name} (out of memory)") from None
+    except Image.DecompressionBombError:
+        raise FileOperationError(f"Image too large: {file_path.name} exceeds safety limits") from None
     except Exception as e:
-        raise FileOperationError(f"Failed to rotate image: {e}") from e
+        raise FileOperationError(f"Failed to rotate {file_path.name}: {e}") from e

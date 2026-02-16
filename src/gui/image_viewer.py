@@ -100,6 +100,28 @@ class ImageViewer(QWidget):
         except FileNotFoundError:
             self._show_error(f"File not found: {path.name}")
             return False
+        except PermissionError:
+            self._show_error(f"Permission denied: Cannot read {path.name}")
+            return False
+        except OSError as e:
+            # Handle various OS-level errors
+            if e.errno == 28:  # ENOSPC - No space left on device
+                self._show_error(f"Cannot load: Disk full")
+            elif e.errno == 5:  # EIO - Input/output error
+                self._show_error(f"I/O error reading {path.name} (corrupted or network issue)")
+            elif e.errno == 116:  # ESTALE - Stale file handle (network)
+                self._show_error(f"Network error: Stale file handle for {path.name}")
+            elif "timed out" in str(e).lower():
+                self._show_error(f"Timeout loading {path.name} (slow network?)")
+            else:
+                self._show_error(f"OS error loading {path.name}: {str(e)}")
+            return False
+        except MemoryError:
+            self._show_error(f"Image too large: {path.name} (out of memory)")
+            return False
+        except Image.UnidentifiedImageError:
+            self._show_error(f"Corrupted or unsupported image: {path.name}")
+            return False
         except ImportError as e:
             # Missing format plugin/library
             ext = path.suffix.lower()
@@ -113,7 +135,10 @@ class ImageViewer(QWidget):
             ext = path.suffix.lower()
             error_str = str(e).lower()
 
-            if ext in ['.heic', '.heif'] and ('format' in error_str or 'cannot identify' in error_str):
+            # Check for corruption indicators
+            if any(word in error_str for word in ['corrupt', 'truncated', 'broken', 'invalid']):
+                self._show_error(f"Corrupted image file: {path.name}")
+            elif ext in ['.heic', '.heif'] and ('format' in error_str or 'cannot identify' in error_str):
                 self._show_error("HEIC format error. Library may not be properly installed.")
             elif ext in ['.webp'] and ('format' in error_str or 'cannot identify' in error_str):
                 self._show_error("WEBP format error. Check Pillow installation.")

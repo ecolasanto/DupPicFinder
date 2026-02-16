@@ -245,8 +245,12 @@ class DupPicFinderApp:
         if found > 0:
             self.main_window.set_find_duplicates_enabled(True)
 
-        # Update status bar
-        message = f"Found {found} images (scanned {scanned} files)"
+        # Update status bar with error info if any
+        error_summary = self.scanner.get_error_summary()
+        if error_summary:
+            message = f"Found {found} images (scanned {scanned} files). {error_summary}"
+        else:
+            message = f"Found {found} images (scanned {scanned} files)"
         self.main_window.update_status(message)
 
         # Close progress dialog
