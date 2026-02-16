@@ -152,8 +152,9 @@ class DupPicFinderApp:
         Args:
             directory: Path to the selected directory
         """
-        # Clear the image viewer when opening a new directory
+        # Clear all views when opening a new directory
         self.image_viewer.clear()
+        self.duplicates_view.clear()
 
         # Clear file list
         self.file_tree.clear()
