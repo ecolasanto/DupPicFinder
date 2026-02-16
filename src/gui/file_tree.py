@@ -41,20 +41,21 @@ class FileTreeWidget(QTreeWidget):
         self.setColumnCount(3)
         self.setHeaderLabels(["File Path", "Size", "Date"])
 
-        # Configure column behavior - make all columns user-resizable
+        # Configure column behavior - make all columns fully user-resizable
         header = self.header()
-        header.setStretchLastSection(False)
 
-        # Filename column: stretches to fill space, but user can still resize
-        header.setSectionResizeMode(self.COL_FILENAME, QHeaderView.Stretch)
-
-        # Size and Date columns: fixed width, user can resize
+        # Make all columns interactive (user can resize)
+        header.setSectionResizeMode(self.COL_FILENAME, QHeaderView.Interactive)
         header.setSectionResizeMode(self.COL_SIZE, QHeaderView.Interactive)
         header.setSectionResizeMode(self.COL_DATE, QHeaderView.Interactive)
 
-        # Set initial widths for fixed columns
-        header.resizeSection(self.COL_SIZE, 100)
-        header.resizeSection(self.COL_DATE, 150)
+        # Set initial widths - give File Path most of the space
+        header.resizeSection(self.COL_FILENAME, 500)  # Wide for file paths
+        header.resizeSection(self.COL_SIZE, 100)      # Medium for size
+        header.resizeSection(self.COL_DATE, 150)      # Medium for date
+
+        # Make the last column stretch to fill remaining space
+        header.setStretchLastSection(True)
 
         # Enable sorting
         self.setSortingEnabled(True)

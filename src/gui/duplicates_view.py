@@ -69,20 +69,21 @@ class DuplicatesView(QWidget):
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["Filename / Location", "Size", "Count"])
 
-        # Configure columns - make all columns user-resizable
+        # Configure columns - make all columns fully user-resizable
         header = self.tree.header()
-        header.setStretchLastSection(False)
 
-        # First column (Filename/Location): stretches to fill space, user can resize
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-
-        # Size and Count columns: fixed width, user can resize
+        # Make all columns interactive (user can resize)
+        header.setSectionResizeMode(0, QHeaderView.Interactive)
         header.setSectionResizeMode(1, QHeaderView.Interactive)
         header.setSectionResizeMode(2, QHeaderView.Interactive)
 
-        # Set initial widths for fixed columns
-        header.resizeSection(1, 100)  # Size column
-        header.resizeSection(2, 80)   # Count column
+        # Set initial widths - give Filename/Location most of the space
+        header.resizeSection(0, 500)  # Wide for file paths
+        header.resizeSection(1, 100)  # Medium for size
+        header.resizeSection(2, 80)   # Small for count
+
+        # Make the last column stretch to fill remaining space
+        header.setStretchLastSection(True)
 
         # Alternating row colors
         self.tree.setAlternatingRowColors(True)
