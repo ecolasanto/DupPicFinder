@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Tests](https://img.shields.io/badge/tests-170%20passing-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-192%20passing-brightgreen.svg)
 
 ---
 
@@ -71,6 +71,8 @@ DupPicFinder is a Python-based GUI desktop application designed to help you find
 - GIF
 - BMP
 - HEIC/HEIF (Apple/iPhone format)
+- WEBP (Modern web format)
+- TIFF/TIF (Professional/archival format)
 
 ## 📸 Screenshots
 
@@ -219,13 +221,15 @@ Press **F1** in the application to see all shortcuts, including:
 
 ## 🎨 Supported Formats
 
-DupPicFinder supports the following image formats:
+DupPicFinder supports **10 image format extensions** across 7 format types:
 
-- **JPG/JPEG** - Joint Photographic Experts Group
-- **PNG** - Portable Network Graphics
-- **GIF** - Graphics Interchange Format
-- **BMP** - Bitmap Image File
+- **JPG/JPEG** - Joint Photographic Experts Group (most common)
+- **PNG** - Portable Network Graphics (lossless compression)
+- **GIF** - Graphics Interchange Format (animations supported)
+- **BMP** - Bitmap Image File (uncompressed)
 - **HEIC/HEIF** - High Efficiency Image Format (Apple/iPhone)
+- **WEBP** - Modern web format (efficient compression)
+- **TIFF/TIF** - Tagged Image File Format (professional/archival)
 
 All format detection is case-insensitive (e.g., `.jpg`, `.JPG`, `.Jpg` all work).
 
@@ -295,7 +299,7 @@ pyinstaller --onefile --windowed --name DupPicFinder src/main.py
 
 ## 🧪 Testing
 
-DupPicFinder has a comprehensive test suite with **170 passing tests** covering all core functionality.
+DupPicFinder has a comprehensive test suite with **192 passing tests** covering all core functionality.
 
 ### Running Tests
 
@@ -323,7 +327,8 @@ python -m pytest tests/test_scanner.py
 | Core functionality | 54 | 95%+ |
 | GUI components | 87 | 95%+ |
 | File operations | 29 | 95%+ |
-| **Total** | **170** | **95%+** |
+| Format support | 22 | 100% |
+| **Total** | **192** | **95%+** |
 
 ---
 

@@ -30,6 +30,15 @@ class TestFormatDetection:
         """Test that .heic files are recognized as supported."""
         assert is_supported_format("/test/sample.heic") is True
 
+    def test_valid_webp_format(self):
+        """Test that .webp files are recognized as supported."""
+        assert is_supported_format("/test/sample.webp") is True
+
+    def test_valid_tiff_formats(self):
+        """Test that .tiff and .tif files are recognized as supported."""
+        assert is_supported_format("/test/sample.tiff") is True
+        assert is_supported_format("/test/sample.tif") is True
+
     def test_invalid_format(self):
         """Test that unsupported formats are rejected."""
         assert is_supported_format("/test/sample.txt") is False
@@ -41,6 +50,9 @@ class TestFormatDetection:
         assert is_supported_format("/test/sample.JPG") is True
         assert is_supported_format("/test/sample.PNG") is True
         assert is_supported_format("/test/sample.HEIC") is True
+        assert is_supported_format("/test/sample.WEBP") is True
+        assert is_supported_format("/test/sample.TIFF") is True
+        assert is_supported_format("/test/sample.TIF") is True
 
     def test_format_normalization(self):
         """Test that get_format normalizes extensions to lowercase."""
@@ -64,5 +76,9 @@ class TestFormatDetection:
 
     def test_all_formats_supported(self):
         """Test that all expected formats are in the supported set."""
-        expected = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'heic', 'heif'}
+        expected = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'heic', 'heif', 'webp', 'tiff', 'tif'}
         assert SUPPORTED_FORMATS == expected
+
+    def test_format_count(self):
+        """Test that we support exactly 10 format extensions."""
+        assert len(SUPPORTED_FORMATS) == 10

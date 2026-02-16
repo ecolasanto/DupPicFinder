@@ -100,8 +100,27 @@ class ImageViewer(QWidget):
         except FileNotFoundError:
             self._show_error(f"File not found: {path.name}")
             return False
+        except ImportError as e:
+            # Missing format plugin/library
+            ext = path.suffix.lower()
+            if ext in ['.heic', '.heif']:
+                self._show_error("HEIC format requires pillow-heif library")
+            else:
+                self._show_error(f"Unsupported format plugin missing: {path.name}")
+            return False
         except Exception as e:
-            self._show_error(f"Error loading image: {str(e)}")
+            # Provide format-specific guidance for common errors
+            ext = path.suffix.lower()
+            error_str = str(e).lower()
+
+            if ext in ['.heic', '.heif'] and ('format' in error_str or 'cannot identify' in error_str):
+                self._show_error("HEIC format error. Library may not be properly installed.")
+            elif ext in ['.webp'] and ('format' in error_str or 'cannot identify' in error_str):
+                self._show_error("WEBP format error. Check Pillow installation.")
+            elif ext in ['.tiff', '.tif'] and ('format' in error_str or 'cannot identify' in error_str):
+                self._show_error("TIFF format error. Check Pillow installation.")
+            else:
+                self._show_error(f"Error loading image: {str(e)}")
             return False
 
     def clear(self):

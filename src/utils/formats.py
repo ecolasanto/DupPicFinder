@@ -12,7 +12,10 @@ SUPPORTED_FORMATS: Set[str] = {
     'gif',
     'bmp',
     'heic',
-    'heif'
+    'heif',
+    'webp',      # Modern web format
+    'tiff',      # Professional format
+    'tif',       # TIFF alternate extension
 }
 
 

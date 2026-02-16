@@ -39,27 +39,37 @@ class TestDirectoryScanner:
         """Test non-recursive scanning only finds files in immediate directory."""
         results = scanner.scan(test_images_dir, recursive=False)
 
-        # Should find sample.jpg, sample.png, sample.gif (3 images)
+        # Should find all test images (jpg, png, gif, bmp, webp, tiff, tif, heic)
         # Should NOT find nested.jpg (in subdirectory)
-        assert len(results) == 3
+        assert len(results) == 8
 
         filenames = {img.path.name for img in results}
         assert "sample.jpg" in filenames
         assert "sample.png" in filenames
         assert "sample.gif" in filenames
+        assert "sample.bmp" in filenames
+        assert "sample.webp" in filenames
+        assert "sample.tiff" in filenames
+        assert "sample.tif" in filenames
+        assert "sample.heic" in filenames
         assert "nested.jpg" not in filenames
 
     def test_recursive_scan(self, scanner, test_base_dir):
         """Test recursive scanning finds files in subdirectories."""
         results = scanner.scan(test_base_dir, recursive=True)
 
-        # Should find all 4 images (including nested.jpg)
-        assert len(results) == 4
+        # Should find all 9 images (8 in images/ + 1 in nested/)
+        assert len(results) == 9
 
         filenames = {img.path.name for img in results}
         assert "sample.jpg" in filenames
         assert "sample.png" in filenames
         assert "sample.gif" in filenames
+        assert "sample.bmp" in filenames
+        assert "sample.webp" in filenames
+        assert "sample.tiff" in filenames
+        assert "sample.tif" in filenames
+        assert "sample.heic" in filenames
         assert "nested.jpg" in filenames
 
     def test_format_filtering(self, scanner, test_images_dir):
@@ -82,17 +92,17 @@ class TestDirectoryScanner:
             assert img_file.size > 0
             assert img_file.created is not None
             assert img_file.modified is not None
-            assert img_file.format in {'jpg', 'png', 'gif'}
+            assert img_file.format in {'jpg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'heic'}
 
     def test_statistics_tracking(self, scanner, test_images_dir):
         """Test that scanner tracks scanned and found counts."""
         results = scanner.scan(test_images_dir, recursive=False)
 
         stats = scanner.get_stats()
-        # Should scan 5 files (3 images + 2 non-images)
-        assert stats['scanned'] == 5
-        # Should find 3 images
-        assert stats['found'] == 3
+        # Should scan 10 files (8 images + 2 non-images: readme.txt, video.mp4)
+        assert stats['scanned'] == 10
+        # Should find 8 images
+        assert stats['found'] == 8
         assert stats['found'] == len(results)
 
     def test_empty_directory(self, scanner, tmp_path):
@@ -111,5 +121,5 @@ class TestDirectoryScanner:
         """Test that scanner accepts string paths."""
         results = scanner.scan(str(test_images_dir), recursive=False)
 
-        assert len(results) == 3
+        assert len(results) == 8
         assert all(isinstance(img, ImageFile) for img in results)

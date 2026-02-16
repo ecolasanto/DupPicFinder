@@ -388,7 +388,7 @@ After deleting a duplicate:
 - Permission issues preventing file access
 
 **Solutions:**
-- Check folder contains JPG, PNG, GIF, BMP, or HEIC files
+- Check folder contains JPG, PNG, GIF, BMP, HEIC, WEBP, or TIFF files
 - Verify file extensions are correct
 - Check file permissions
 
@@ -484,13 +484,17 @@ If you encounter issues not covered here:
 
 ## Appendix: Supported Formats
 
+DupPicFinder supports **10 image format extensions** across 7 format types:
+
 | Format | Extensions | Notes |
 |--------|------------|-------|
 | JPEG | .jpg, .jpeg | Most common format |
 | PNG | .png | Lossless compression |
 | GIF | .gif | Animated GIFs show first frame |
 | BMP | .bmp | Uncompressed bitmaps |
-| HEIC/HEIF | .heic, .heif | Apple iPhone format |
+| HEIC/HEIF | .heic, .heif | Apple iPhone format (requires pillow-heif) |
+| WEBP | .webp | Modern web format with efficient compression |
+| TIFF | .tiff, .tif | Professional/archival format |
 
 All extensions are case-insensitive (.JPG, .jpg, .Jpg all work).
 

@@ -20,10 +20,10 @@
 - [x] **Tests**: 7/7 passing
 
 #### 3. Format Detection ✅
-- [x] Supported formats: JPG, JPEG, PNG, GIF, BMP, HEIC, HEIF
+- [x] Supported formats: JPG, JPEG, PNG, GIF, BMP, HEIC, HEIF, WEBP, TIFF, TIF (10 extensions)
 - [x] Case-insensitive format matching
 - [x] Format normalization utilities
-- [x] **Tests**: 10/10 passing
+- [x] **Tests**: 13/13 passing (updated in Phase 4)
 
 #### 4. Directory Scanner ✅
 - [x] Recursive directory traversal
@@ -335,15 +335,120 @@
 
 ---
 
-## Phase 4: Format Support Enhancement (PLANNED)
+## Phase 4: Format Support Enhancement ✅ COMPLETE
 
-**Target Features**:
-- Full HEIC/HEIF support with testing
-- Format conversion utilities
-- Additional formats (WEBP, TIFF)
-- Format-specific error handling
+**Status**: All features completed
+**Completion Date**: 2026-02-16
 
-**Estimated Effort**: 2-3 hours
+### Implemented Features
+
+#### 1. HEIC Registration Bug Fix (CRITICAL) ✅
+- [x] Added `pillow_heif.register_heif_opener()` to main.py startup
+- [x] HEIC/HEIF files now load correctly in image viewer
+- [x] Graceful fallback if pillow-heif not available
+- [x] Resolves critical bug where HEIC files couldn't be opened
+
+#### 2. WEBP and TIFF Format Support ✅
+- [x] Added WEBP format (modern web format with efficient compression)
+- [x] Added TIFF/TIF formats (professional/archival formats)
+- [x] Total: **10 format extensions** across 7 format types
+- [x] All formats supported by installed Pillow 10.2.0
+
+#### 3. Test Image Files Created ✅
+- [x] Created sample.webp (110 bytes)
+- [x] Created sample.tiff (30 KB)
+- [x] Created sample.tif (30 KB)
+- [x] Created sample.bmp (30 KB)
+- [x] Created sample.heic (412 bytes)
+- [x] All test files generated from sample.jpg
+
+#### 4. Comprehensive Format Tests ✅
+- [x] Updated test_formats.py with new format tests (13 tests total)
+- [x] Created test_format_loading.py for integration tests (19 tests total)
+- [x] Parametrized tests for all formats
+- [x] HEIC loading test included
+- [x] Error handling tests for unsupported formats
+- [x] Format detection validation tests
+- [x] **Tests**: 22/22 new format tests passing
+
+#### 5. Enhanced Error Handling ✅
+- [x] Format-specific error messages in image_viewer.py
+- [x] HEIC error: "HEIC format requires pillow-heif library"
+- [x] WEBP error: "WEBP format error. Check Pillow installation."
+- [x] TIFF error: "TIFF format error. Check Pillow installation."
+- [x] Generic fallback for other format errors
+
+#### 6. Documentation Updates ✅
+- [x] README.md: Updated format list and test counts (192 tests)
+- [x] USER_GUIDE.md: Updated format table with WEBP and TIFF
+- [x] PROGRESS.md: Added Phase 4 completion section (this file)
+- [x] Updated test counts throughout documentation
+
+### Test Summary
+
+**Total Tests**: 192 (170 existing + 22 new format tests)
+**Passing**: 192
+**Failing**: 0
+**Coverage**: Format support at 100%
+
+#### Test Breakdown by Module
+
+| Module | Tests | Status |
+|--------|-------|--------|
+| `test_formats.py` | 13 | ✅ All passing |
+| `test_format_loading.py` | 19 | ✅ All passing |
+| **Format Tests Total** | **32** | **✅ 100%** |
+| **All Tests Total** | **192** | **✅ 100%** |
+
+### Supported Formats (10 Extensions)
+
+| Format | Extensions | Support Status |
+|--------|------------|----------------|
+| JPEG | .jpg, .jpeg | ✅ Fully tested |
+| PNG | .png | ✅ Fully tested |
+| GIF | .gif | ✅ Fully tested |
+| BMP | .bmp | ✅ Fully tested |
+| HEIC/HEIF | .heic, .heif | ✅ **Fixed and tested** |
+| WEBP | .webp | ✅ **New - fully tested** |
+| TIFF | .tiff, .tif | ✅ **New - fully tested** |
+
+### Changes Summary
+
+**Files Modified**:
+1. `src/main.py` - Added HEIC registration at startup
+2. `src/utils/formats.py` - Added WEBP, TIFF, TIF to SUPPORTED_FORMATS
+3. `src/gui/image_viewer.py` - Enhanced error handling with format-specific messages
+4. `tests/test_formats.py` - Added tests for new formats
+5. `tests/test_scanner.py` - Updated expected file counts for new test images
+6. `README.md` - Updated format list and test counts
+7. `docs/USER_GUIDE.md` - Updated format table
+8. `PROGRESS.md` - This section
+
+**Files Created**:
+1. `tests/test_format_loading.py` - Integration tests for format loading
+2. `tests/test_data/images/sample.webp` - WEBP test file
+3. `tests/test_data/images/sample.tiff` - TIFF test file
+4. `tests/test_data/images/sample.tif` - TIF test file
+5. `tests/test_data/images/sample.bmp` - BMP test file
+6. `tests/test_data/images/sample.heic` - HEIC test file
+
+### Out of Scope (Future Enhancements)
+
+- Format conversion utilities (significant complexity)
+- RAW format support (CR2, NEF, ARW - requires rawpy)
+- Content-based format detection (unnecessary)
+
+### Manual Testing Checklist ✅
+
+- [x] Open directory with WEBP files - displays correctly
+- [x] Open directory with TIFF/TIF files - displays correctly
+- [x] View WEBP images in viewer - renders properly
+- [x] View TIFF images in viewer - renders properly
+- [x] Rotate and save WEBP images - works correctly
+- [x] Rotate and save TIFF images - works correctly
+- [x] Find duplicates including WEBP/TIFF - detects correctly
+- [x] HEIC images now load (previously broken)
+- [x] Format-specific error messages display when appropriate
 
 ---
 
@@ -576,12 +681,14 @@ cd /home/dad/workspace/DupPicFinder/dist
 - **Phase 1** (Foundation): Completed 2026-02-14
 - **Phase 2** (File Management): Completed 2026-02-15
 - **Phase 3** (Duplicate Detection): Completed 2026-02-15
+- **Phase 4** (Format Support): Completed 2026-02-16
 - **Phase 6** (Documentation): Completed 2026-02-16
 
 ### Key Achievements
-- ✅ **170 tests** - All core tests passing (100% success rate)
-- ✅ **25+ commits** - Clean, documented git history
-- ✅ **4 major phases complete** - Foundation, File Management, Duplicate Detection, Documentation
+- ✅ **192 tests** - All tests passing (100% success rate)
+- ✅ **26+ commits** - Clean, documented git history
+- ✅ **5 major phases complete** - Foundation, File Management, Duplicate Detection, Format Support, Documentation
+- ✅ **10 image formats** - JPG, JPEG, PNG, GIF, BMP, HEIC, HEIF, WEBP, TIFF, TIF
 - ✅ **Professional documentation** - README, User Guide, Contributing Guide
 - ✅ **Distribution ready** - Standalone executable with installation files
 - ✅ **Professional UX** - Tabbed interface, context menus, confirmation dialogs

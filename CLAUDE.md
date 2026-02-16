@@ -20,12 +20,14 @@ DupPicFinder is a Python-based GUI desktop application designed to help users fi
 - **GUI Desktop Application**: User-friendly graphical interface built with Python
 - **Hash-Based Duplicate Detection**: Exact duplicate detection using file hashing (MD5/SHA256)
 - **Recursive Directory Scanning**: Automatically scan subdirectories for images
-- **Multi-Format Support**: Handle common image formats including:
+- **Multi-Format Support**: Handle 10 image format extensions including:
   - JPG/JPEG
   - PNG
   - GIF
   - BMP
-  - HEIC (Apple/iPhone format)
+  - HEIC/HEIF (Apple/iPhone format)
+  - WEBP (Modern web format)
+  - TIFF/TIF (Professional/archival format)
 
 ### File Management
 - **Image Preview/Viewing**: Display images before performing any operations

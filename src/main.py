@@ -9,6 +9,13 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# Register HEIC/HEIF support
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except ImportError:
+    pass  # pillow-heif not available, HEIC support disabled
+
 from PyQt5.QtWidgets import QApplication, QMessageBox, QMenu, QFileDialog
 from PyQt5.QtCore import QEventLoop
 
