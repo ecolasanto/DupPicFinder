@@ -1,7 +1,9 @@
-"""Background worker thread for hashing files."""
+"""Background worker thread for hashing files with multi-threading support."""
 
+import os
 from pathlib import Path
 from typing import List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from src.core.file_model import ImageFile
@@ -27,48 +29,71 @@ class HashWorker(QThread):
     hash_complete = pyqtSignal(int)  # total_hashed
     hash_error = pyqtSignal(str)  # error_message
 
-    def __init__(self, image_files: List[ImageFile], algorithm: HashAlgorithm = 'md5'):
+    def __init__(self, image_files: List[ImageFile], algorithm: HashAlgorithm = 'md5', max_workers: int = None):
         """Initialize the hash worker.
 
         Args:
             image_files: List of ImageFile objects to hash
             algorithm: Hash algorithm to use ('md5' or 'sha256')
+            max_workers: Maximum number of worker threads (default: CPU count)
         """
         super().__init__()
         self.image_files = image_files
         self.algorithm = algorithm
         self._cancelled = False
 
-    def run(self):
-        """Run the hashing operation in the background thread.
+        # Auto-detect optimal thread count if not specified
+        # Use CPU count, but cap at 8 to avoid excessive overhead
+        if max_workers is None:
+            cpu_count = os.cpu_count() or 4
+            self.max_workers = min(cpu_count, 8)
+        else:
+            self.max_workers = max_workers
 
-        This method is called when the thread starts. It hashes all files
-        and emits signals as it progresses.
+    def run(self):
+        """Run the hashing operation in the background thread with multi-threading.
+
+        This method is called when the thread starts. It hashes files in parallel
+        using a ThreadPoolExecutor and emits signals as it progresses.
         """
         try:
             total_files = len(self.image_files)
             hashed_count = 0
 
-            for i, img_file in enumerate(self.image_files):
-                # Check if cancelled
-                if self._cancelled:
-                    return
+            # Use ThreadPoolExecutor for parallel hashing
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                # Submit all hash tasks
+                future_to_file = {
+                    executor.submit(self._hash_file, img_file): img_file
+                    for img_file in self.image_files
+                }
 
-                try:
-                    # Compute hash for this file
-                    hash_value = compute_file_hash(img_file.path, self.algorithm)
+                # Process completed hashes as they finish
+                for future in as_completed(future_to_file):
+                    # Check if cancelled
+                    if self._cancelled:
+                        # Cancel all pending futures
+                        for f in future_to_file:
+                            f.cancel()
+                        return
 
-                    # Emit file_hashed signal
-                    self.file_hashed.emit(img_file.path, hash_value)
+                    img_file = future_to_file[future]
 
-                    hashed_count += 1
+                    try:
+                        # Get the hash result
+                        hash_value = future.result()
+
+                        if hash_value is not None:
+                            # Emit file_hashed signal
+                            self.file_hashed.emit(img_file.path, hash_value)
+                            hashed_count += 1
+
+                    except Exception as e:
+                        # Skip files that failed to hash, but continue with others
+                        pass
 
                     # Emit progress update
                     self.hash_progress.emit(hashed_count, total_files)
-
-                except (FileNotFoundError, PermissionError, OSError) as e:
-                    # Skip files we can't hash, but continue with others
-                    continue
 
             # Emit completion signal
             self.hash_complete.emit(hashed_count)
@@ -76,6 +101,21 @@ class HashWorker(QThread):
         except Exception as e:
             # Emit error signal
             self.hash_error.emit(str(e))
+
+    def _hash_file(self, img_file: ImageFile) -> str:
+        """Hash a single file (called by worker threads).
+
+        Args:
+            img_file: ImageFile object to hash
+
+        Returns:
+            Hash string, or None if hashing failed
+        """
+        try:
+            return compute_file_hash(img_file.path, self.algorithm)
+        except (FileNotFoundError, PermissionError, OSError):
+            # Return None for files we can't hash
+            return None
 
     def cancel(self):
         """Cancel the hashing operation.
