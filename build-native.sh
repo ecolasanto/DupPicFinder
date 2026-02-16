@@ -41,10 +41,14 @@ echo "   GLIBC: $(ldd --version | head -1 | awk '{print $NF}')"
 echo "   Python: $(python --version)"
 echo ""
 
-# Clean previous build
-if [ -d "$SCRIPT_DIR/build" ] || [ -d "$SCRIPT_DIR/dist" ]; then
-    echo "🧹 Cleaning previous build..."
-    rm -rf "$SCRIPT_DIR/build" "$SCRIPT_DIR/dist"
+# Clean previous build artifacts (preserve dist/dockerBuild/)
+echo "🧹 Cleaning previous build..."
+rm -rf "$SCRIPT_DIR/build"
+
+# Only remove the DupPicFinder executable, not the entire dist directory
+# This preserves dist/dockerBuild/ and other build infrastructure
+if [ -f "$SCRIPT_DIR/dist/DupPicFinder" ]; then
+    rm -f "$SCRIPT_DIR/dist/DupPicFinder"
 fi
 
 # Build executable
