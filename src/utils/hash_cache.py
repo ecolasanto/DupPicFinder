@@ -158,13 +158,10 @@ class HashCache:
                 cached[row[0]] = (row[1], row[2], row[3])
 
         # Classify each file as a hit or miss.
+        # Use the mtime already captured in ImageFile.modified — no extra
+        # stat() calls needed, which avoids thousands of disk round-trips.
         for path_str, img in key_map.items():
-            # Get current mtime from disk; treat missing files as misses.
-            try:
-                mtime = img.path.stat().st_mtime
-            except OSError:
-                misses.append(img)
-                continue
+            mtime = img.modified.timestamp()
 
             if path_str in cached:
                 cached_size, cached_mtime, cached_hash = cached[path_str]
@@ -199,10 +196,8 @@ class HashCache:
             img = meta.get(path)
             if img is None:
                 continue
-            try:
-                mtime = path.stat().st_mtime
-            except OSError:
-                continue  # File disappeared; skip caching.
+            # Use the mtime from the ImageFile — already read during the scan.
+            mtime = img.modified.timestamp()
             rows.append((str(path), img.size, mtime, algorithm, hash_value))
 
         if rows:

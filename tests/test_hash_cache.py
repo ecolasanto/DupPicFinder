@@ -249,13 +249,20 @@ class TestHashCacheBasics(unittest.TestCase):
     # Missing file during lookup
     # ------------------------------------------------------------------
 
-    def test_lookup_missing_file_is_treated_as_miss(self):
-        """A file that disappears between scan and hash step is a miss."""
+    def test_lookup_missing_file_returns_cached_hash(self):
+        """A cached file that has since been deleted is still a hit.
+
+        lookup_batch uses ImageFile.modified (from the scan) rather than
+        calling stat() on disk, so it cannot detect files deleted after the
+        scan.  HashWorker._hash_file handles the FileNotFoundError gracefully
+        if the file has truly disappeared by hash time.
+        """
         self.cache.store_batch({self.file1: "h1"}, [self.img1], 'md5')
         self.file1.unlink()
         hits, misses = self.cache.lookup_batch([self.img1], 'md5')
-        self.assertEqual(hits, {})
-        self.assertEqual(len(misses), 1)
+        # The cached entry is returned as a hit because no stat() is called.
+        self.assertIn(self.file1, hits)
+        self.assertEqual(misses, [])
 
 
 if __name__ == '__main__':

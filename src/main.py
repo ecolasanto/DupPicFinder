@@ -83,9 +83,6 @@ class DupPicFinderApp:
         self.file_tree.show()
         self.tabbed_panel.show()
 
-        print(f"File tree visible: {self.file_tree.isVisible()}")
-        print(f"Tabbed panel visible: {self.tabbed_panel.isVisible()}")
-
         # Connect signals
         self._connect_signals()
 
