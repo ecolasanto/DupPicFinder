@@ -34,6 +34,10 @@ class MainWindow(QMainWindow):
         """Initialize the main window."""
         super().__init__()
 
+        self._current_directory = None
+        self._file_count = 0
+        self._close_check_callback = None
+
         self._init_ui()
         self._create_menu_bar()
         self._create_status_bar()
@@ -81,6 +85,7 @@ class MainWindow(QMainWindow):
         open_action = QAction("&Open Directory...", self)
         open_action.setShortcut("Ctrl+O")
         open_action.setStatusTip("Open a directory to scan for images")
+        open_action.setToolTip("Open a directory and scan for image files (Ctrl+O)")
         open_action.triggered.connect(self._on_open_directory)
         file_menu.addAction(open_action)
 
@@ -90,6 +95,7 @@ class MainWindow(QMainWindow):
         self.save_action = QAction("&Save", self)
         self.save_action.setShortcut("Ctrl+S")
         self.save_action.setStatusTip("Save changes to the current file")
+        self.save_action.setToolTip("Save rotation or other changes to the current image (Ctrl+S)")
         self.save_action.triggered.connect(lambda: self.save_requested.emit())
         self.save_action.setEnabled(False)  # Disabled until file is modified
         file_menu.addAction(self.save_action)
@@ -100,6 +106,7 @@ class MainWindow(QMainWindow):
         exit_action = QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.setStatusTip("Exit the application")
+        exit_action.setToolTip("Exit DupPicFinder (Ctrl+Q)")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
@@ -110,6 +117,7 @@ class MainWindow(QMainWindow):
         self.rename_action = QAction("&Rename File...", self)
         self.rename_action.setShortcuts(["Ctrl+R", "F2"])  # F2 is common rename shortcut
         self.rename_action.setStatusTip("Rename the selected file (Ctrl+R or F2)")
+        self.rename_action.setToolTip("Rename the selected file (Ctrl+R or F2)")
         self.rename_action.triggered.connect(lambda: self.rename_requested.emit())
         self.rename_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.rename_action)
@@ -118,6 +126,7 @@ class MainWindow(QMainWindow):
         self.delete_action = QAction("&Delete File...", self)
         self.delete_action.setShortcut("Delete")
         self.delete_action.setStatusTip("Delete the selected file")
+        self.delete_action.setToolTip("Permanently delete the selected file (Delete key)")
         self.delete_action.triggered.connect(lambda: self.delete_requested.emit())
         self.delete_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.delete_action)
@@ -128,6 +137,7 @@ class MainWindow(QMainWindow):
         self.rotate_left_action = QAction("Rotate &Left", self)
         self.rotate_left_action.setShortcut("[")
         self.rotate_left_action.setStatusTip("Rotate the image 90° counter-clockwise")
+        self.rotate_left_action.setToolTip("Rotate the image 90° counter-clockwise ([)")
         self.rotate_left_action.triggered.connect(lambda: self.rotate_left_requested.emit())
         self.rotate_left_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.rotate_left_action)
@@ -136,6 +146,7 @@ class MainWindow(QMainWindow):
         self.rotate_right_action = QAction("Rotate &Right", self)
         self.rotate_right_action.setShortcut("]")
         self.rotate_right_action.setStatusTip("Rotate the image 90° clockwise")
+        self.rotate_right_action.setToolTip("Rotate the image 90° clockwise (])")
         self.rotate_right_action.triggered.connect(lambda: self.rotate_right_requested.emit())
         self.rotate_right_action.setEnabled(False)  # Disabled until file is selected
         edit_menu.addAction(self.rotate_right_action)
@@ -147,6 +158,9 @@ class MainWindow(QMainWindow):
         self.find_duplicates_action = QAction("Find &Duplicates...", self)
         self.find_duplicates_action.setShortcut("Ctrl+D")
         self.find_duplicates_action.setStatusTip("Find duplicate images (Ctrl+D)")
+        self.find_duplicates_action.setToolTip(
+            "Scan loaded images for exact duplicates using hash comparison (Ctrl+D)"
+        )
         self.find_duplicates_action.triggered.connect(lambda: self.find_duplicates_requested.emit())
         self.find_duplicates_action.setEnabled(False)  # Disabled until files are loaded
         tools_menu.addAction(self.find_duplicates_action)
@@ -158,6 +172,7 @@ class MainWindow(QMainWindow):
         shortcuts_action = QAction("&Keyboard Shortcuts", self)
         shortcuts_action.setShortcut("F1")
         shortcuts_action.setStatusTip("View keyboard shortcuts")
+        shortcuts_action.setToolTip("View all available keyboard shortcuts (F1)")
         shortcuts_action.triggered.connect(self._on_shortcuts)
         help_menu.addAction(shortcuts_action)
 
@@ -166,6 +181,7 @@ class MainWindow(QMainWindow):
         # About action
         about_action = QAction("&About", self)
         about_action.setStatusTip("About DupPicFinder")
+        about_action.setToolTip("Show application information and version")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
@@ -173,7 +189,9 @@ class MainWindow(QMainWindow):
         """Create the status bar."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("Ready - Use Ctrl+O to open a directory, arrow keys to navigate")
+        self.status_bar.showMessage(
+            "Ready  |  Ctrl+O: Open directory  |  Ctrl+D: Find duplicates  |  F1: Keyboard shortcuts"
+        )
 
     def _on_open_directory(self, start_dir=None):
         """Handle Open Directory menu action.
@@ -305,6 +323,39 @@ class MainWindow(QMainWindow):
             enabled: True to enable, False to disable
         """
         self.find_duplicates_action.setEnabled(enabled)
+
+    def set_directory_and_count(self, directory, file_count: int):
+        """Update the window title with the current directory and file count.
+
+        Args:
+            directory: Path to the current directory
+            file_count: Number of image files found
+        """
+        self._current_directory = directory
+        self._file_count = file_count
+        self._update_title()
+
+    def _update_title(self):
+        """Rebuild the window title from current state."""
+        if self._current_directory is not None:
+            dir_name = Path(self._current_directory).name
+            count = self._file_count
+            noun = "image" if count == 1 else "images"
+            self.setWindowTitle(f"DupPicFinder - {count} {noun} [{dir_name}]")
+        else:
+            self.setWindowTitle("DupPicFinder - Image Organizer")
+
+    def closeEvent(self, event):
+        """Handle window close event, checking for unsaved changes.
+
+        Args:
+            event: Close event
+        """
+        if self._close_check_callback is not None:
+            if not self._close_check_callback():
+                event.ignore()
+                return
+        super().closeEvent(event)
 
     def save_settings(self, settings_manager):
         """Save window settings.

@@ -64,6 +64,7 @@ class DupPicFinderApp:
         # Scanning state
         self.scan_worker = None
         self.scanned_files = []  # Accumulate files during scan
+        self._current_scan_dir = None
 
         # Duplicate detection state
         self.duplicate_finder = DuplicateFinder(algorithm='md5')
@@ -94,6 +95,9 @@ class DupPicFinderApp:
 
         # Connect close event to save settings
         self.app.aboutToQuit.connect(self._save_settings)
+
+        # Register unsaved-changes check so the window can prompt before closing
+        self.main_window._close_check_callback = self._check_unsaved_on_close
 
     def _connect_signals(self):
         """Connect signals between components."""
@@ -180,8 +184,9 @@ class DupPicFinderApp:
         Args:
             directory: Path to the selected directory
         """
-        # Save last directory for next time
+        # Save last directory for next time and track for title update
         self.settings_manager.save_last_directory(directory)
+        self._current_scan_dir = directory
 
         # Clear all views when opening a new directory
         self.image_viewer.clear()
@@ -246,6 +251,9 @@ class DupPicFinderApp:
         if found > 0:
             self.main_window.set_find_duplicates_enabled(True)
 
+        # Update window title with file count and directory
+        self.main_window.set_directory_and_count(self._current_scan_dir, found)
+
         # Build status message with performance stats
         files_per_sec = scanned / elapsed if elapsed > 0 else 0
         format_summary = self.scanner.get_format_summary()
@@ -307,8 +315,10 @@ class DupPicFinderApp:
             success = self.image_viewer.load_image(image_file.path)
 
             if success:
-                # Update status
-                self.main_window.update_status(f"Viewing: {image_file.path.name}")
+                # Update status with shortcut hints
+                self.main_window.update_status(
+                    f"Viewing: {image_file.path.name}  |  [/]: Rotate  |  Ctrl+R: Rename  |  Del: Delete"
+                )
             else:
                 # Error message already shown by image viewer
                 self.main_window.update_status(f"Failed to load: {image_file.path.name}")
@@ -847,6 +857,37 @@ class DupPicFinderApp:
             self.tabbed_panel.show_duplicates()
         else:
             self.tabbed_panel.show_image_viewer()
+
+    def _check_unsaved_on_close(self) -> bool:
+        """Check for unsaved changes before the window closes.
+
+        Returns:
+            True if it is safe to close, False if the close should be cancelled
+        """
+        if not self.image_viewer.is_modified:
+            return True
+
+        file_name = ""
+        if self.image_viewer.current_image_path:
+            file_name = self.image_viewer.current_image_path.name
+
+        reply = QMessageBox.question(
+            self.main_window,
+            "Unsaved Changes",
+            f"The image '{file_name}' has unsaved rotation changes.\n\n"
+            "Do you want to save before closing?",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+            QMessageBox.Save,
+        )
+
+        if reply == QMessageBox.Save:
+            self._on_save_requested()
+            return True
+        elif reply == QMessageBox.Discard:
+            return True
+        else:
+            # Cancel - do not close
+            return False
 
     def run(self) -> int:
         """Run the application.

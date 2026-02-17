@@ -452,10 +452,10 @@
 
 ---
 
-## Phase 5: Performance & Polish 🚧 IN PROGRESS
+## Phase 5: Performance & Polish ✅ COMPLETE
 
-**Status**: 4 of 5 priorities completed (2026-02-16)
-**Completion**: 80%
+**Status**: All 5 priorities completed (2026-02-17)
+**Completion**: 100%
 
 ### Completed Features
 
@@ -498,16 +498,12 @@
 - [x] Average file size: Calculate and store average
 - [x] Enhanced status messages with comprehensive stats
 
-### Remaining Features
-
-#### 5. Final UI Polish ⏳ (Priority 5) - TODO
-- [ ] Tooltips on all buttons and actions
-- [ ] Better status bar messages refinements
-- [ ] File count in window title
-- [ ] Confirmation before closing with unsaved changes
-- [ ] Additional keyboard shortcut hints
-- [ ] Icon improvements (if applicable)
-- [ ] Final visual refinements
+#### 5. Final UI Polish ✅ (Priority 5)
+- [x] Tooltips on all menu actions (Open, Save, Exit, Rename, Delete, Rotate, Find Duplicates, Shortcuts, About)
+- [x] File count and directory name in window title (e.g. "DupPicFinder - 150 images [mydir]")
+- [x] Confirmation dialog before closing with unsaved rotation changes (Save / Discard / Cancel)
+- [x] Improved status bar ready message with key shortcut hints
+- [x] Keyboard shortcut hints shown in image viewing status message
 
 ### Build Structure Improvements ✅
 - [x] Restructured packaging directory
@@ -533,7 +529,7 @@
 - Performance monitoring and statistics
 - Column resize fixes
 
-**Estimated Remaining Effort**: 1-2 hours (Priority 5 only)
+**All priorities complete.** Phase 5 fully done.
 
 ---
 
