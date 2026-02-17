@@ -101,16 +101,12 @@ class DupPicFinderApp:
 
     def _connect_signals(self):
         """Connect signals between components."""
-        # Connect Open Directory action to use last directory
-        # Disconnect default connection first
-        try:
-            self.main_window.findChild(QAction, None).triggered.disconnect()
-        except:
-            pass  # No existing connection
-
-        # When user clicks Open Directory, pass last directory
+        # Replace the default Open Directory connection with one that passes
+        # the last-used directory. Disconnect the original handler first to
+        # avoid opening two file dialogs on a single click.
         for action in self.main_window.menuBar().findChildren(QAction):
             if action.text() == "&Open Directory...":
+                action.triggered.disconnect()
                 action.triggered.connect(self._on_open_directory_action)
                 break
 
