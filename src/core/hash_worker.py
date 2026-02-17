@@ -139,17 +139,20 @@ class HashWorker(QThread):
 
                     self.hash_progress.emit(hashed_count, total_files)
 
+            # Emit completion now so the UI updates immediately.
+            # The cache write below happens after the signal, in the background,
+            # so the user never waits for it.
+            elapsed_time = time.time() - start_time
+            self.hash_complete.emit(hashed_count, elapsed_time)
+
             # ----------------------------------------------------------
-            # Phase 3: bulk cache store (QThread only)
+            # Phase 3: bulk cache store (QThread only, after UI is updated)
             # ----------------------------------------------------------
             if cache is not None and new_results:
                 cache.store_batch(new_results, files_to_hash, self.algorithm)
 
             if cache is not None:
                 cache.close()
-
-            elapsed_time = time.time() - start_time
-            self.hash_complete.emit(hashed_count, elapsed_time)
 
         except Exception as e:
             self.hash_error.emit(str(e))
