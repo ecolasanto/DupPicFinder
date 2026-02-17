@@ -52,8 +52,9 @@ class DupPicFinderApp:
         # Create settings manager
         self.settings_manager = SettingsManager()
 
-        # Persistent hash cache (lives for the entire process)
-        self.hash_cache = HashCache()
+        # Path to the persistent hash cache database
+        cache_dir = HashCache._default_cache_dir()
+        self.hash_cache_db = cache_dir / "hash_cache.db"
 
         # Create components
         self.scanner = DirectoryScanner()
@@ -619,7 +620,7 @@ class DupPicFinderApp:
         self.hash_worker = HashWorker(
             self.scanned_files,
             algorithm='md5',
-            cache=self.hash_cache,
+            cache_db_path=self.hash_cache_db,
         )
 
         # Connect worker signals
@@ -871,8 +872,6 @@ class DupPicFinderApp:
     def _on_quit(self):
         """Clean up resources and save settings on application exit."""
         self._save_settings()
-        if self.hash_cache:
-            self.hash_cache.close()
 
     def _check_unsaved_on_close(self) -> bool:
         """Check for unsaved changes before the window closes.

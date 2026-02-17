@@ -35,7 +35,7 @@ class HashWorker(QThread):
         image_files: List[ImageFile],
         algorithm: HashAlgorithm = 'md5',
         max_workers: int = None,
-        cache=None,
+        cache_db_path=None,
     ):
         """Initialize the hash worker.
 
@@ -43,14 +43,15 @@ class HashWorker(QThread):
             image_files: List of ImageFile objects to hash
             algorithm: Hash algorithm to use ('md5' or 'sha256')
             max_workers: Maximum number of worker threads (default: CPU count)
-            cache: Optional HashCache instance.  When provided, unchanged files
-                   are served from the cache without reading from disk.  Must be
-                   accessed only from the QThread (not from worker threads).
+            cache_db_path: Optional Path to the SQLite cache database.  When
+                           provided a HashCache is opened inside run() (in the
+                           QThread) so the SQLite connection is always created
+                           and used on the same thread.
         """
         super().__init__()
         self.image_files = image_files
         self.algorithm = algorithm
-        self.cache = cache
+        self.cache_db_path = cache_db_path
         self.cache_hits = 0  # Set during run(); read by caller after completion
         self._cancelled = False
 
@@ -85,18 +86,24 @@ class HashWorker(QThread):
 
             # ----------------------------------------------------------
             # Phase 1: bulk cache lookup (QThread only)
+            # Open the cache here so the SQLite connection is created in
+            # this thread, avoiding cross-thread access errors.
             # ----------------------------------------------------------
             files_to_hash: List[ImageFile] = self.image_files
             new_results: Dict[Path, str] = {}
+            cache = None
 
-            if self.cache is not None:
-                hits, misses = self.cache.lookup_batch(
+            if self.cache_db_path is not None:
+                from src.utils.hash_cache import HashCache
+                cache = HashCache(db_path=self.cache_db_path)
+                hits, misses = cache.lookup_batch(
                     self.image_files, self.algorithm
                 )
                 self.cache_hits = len(hits)
 
                 for path, hash_value in hits.items():
                     if self._cancelled:
+                        cache.close()
                         return
                     self.file_hashed.emit(path, hash_value)
                     hashed_count += 1
@@ -135,8 +142,11 @@ class HashWorker(QThread):
             # ----------------------------------------------------------
             # Phase 3: bulk cache store (QThread only)
             # ----------------------------------------------------------
-            if self.cache is not None and new_results:
-                self.cache.store_batch(new_results, files_to_hash, self.algorithm)
+            if cache is not None and new_results:
+                cache.store_batch(new_results, files_to_hash, self.algorithm)
+
+            if cache is not None:
+                cache.close()
 
             elapsed_time = time.time() - start_time
             self.hash_complete.emit(hashed_count, elapsed_time)

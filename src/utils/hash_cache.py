@@ -60,6 +60,13 @@ class HashCache:
         cache.close()
     """
 
+    @staticmethod
+    def _default_cache_dir() -> Path:
+        """Return the default cache directory, creating it if needed."""
+        cache_dir = Path.home() / ".cache" / "DupPicFinder"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        return cache_dir
+
     def __init__(self, db_path: Optional[Path] = None):
         """Open (or create) the cache database.
 
@@ -68,9 +75,7 @@ class HashCache:
                      ~/.cache/DupPicFinder/hash_cache.db.
         """
         if db_path is None:
-            cache_dir = Path.home() / ".cache" / "DupPicFinder"
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            db_path = cache_dir / "hash_cache.db"
+            db_path = HashCache._default_cache_dir() / "hash_cache.db"
 
         self._db_path = Path(db_path)
         self._conn = sqlite3.connect(str(self._db_path))
