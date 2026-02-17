@@ -3,13 +3,17 @@
 Stores (file_path, file_size, mtime_float, algorithm) -> hash_value so that
 unchanged files skip re-hashing on subsequent runs.
 
-The database lives at ~/.cache/DupPicFinder/hash_cache.db by default.
+The database lives at:
+  Linux/macOS: ~/.cache/DupPicFinder/hash_cache.db
+  Windows:     %LOCALAPPDATA%\\DupPicFinder\\hash_cache.db
 
 All public methods must be called from the same thread that created the
 HashCache instance.  Do NOT call them from ThreadPoolExecutor workers.
 """
 
+import os
 import sqlite3
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -62,8 +66,17 @@ class HashCache:
 
     @staticmethod
     def _default_cache_dir() -> Path:
-        """Return the default cache directory, creating it if needed."""
-        cache_dir = Path.home() / ".cache" / "DupPicFinder"
+        """Return the default cache directory, creating it if needed.
+
+        Platform paths:
+          Linux/macOS: ~/.cache/DupPicFinder/
+          Windows:     %LOCALAPPDATA%\\DupPicFinder\\
+        """
+        if sys.platform == "win32":
+            base = Path(os.environ.get("LOCALAPPDATA", Path.home()))
+        else:
+            base = Path.home() / ".cache"
+        cache_dir = base / "DupPicFinder"
         cache_dir.mkdir(parents=True, exist_ok=True)
         return cache_dir
 
