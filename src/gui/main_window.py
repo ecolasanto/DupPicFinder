@@ -267,7 +267,7 @@ class MainWindow(QMainWindow):
             "About DupPicFinder",
             "<h3>DupPicFinder</h3>"
             "<p>A tool for finding and managing duplicate images.</p>"
-            "<p>Version 1.0.0</p>"
+            "<p>Version 1.1.0</p>"
             "<p>Supports: JPG, PNG, GIF, BMP, HEIC/HEIF</p>"
         )
 
