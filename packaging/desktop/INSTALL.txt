@@ -56,4 +56,4 @@ FEATURES:
 
 
 For more information, visit:
-https://github.com/yourusername/DupPicFinder (update with actual URL)
+https://github.com/ecolasanto/DupPicFinder

@@ -143,7 +143,7 @@ MIT License - See project repository for full license text.
 SUPPORT:
 -------
 For issues, questions, or contributions, visit:
-https://github.com/yourusername/DupPicFinder
+https://github.com/ecolasanto/DupPicFinder
 
 ACKNOWLEDGMENTS:
 ---------------

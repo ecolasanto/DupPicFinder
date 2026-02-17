@@ -63,7 +63,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 3. **Add upstream remote:**
    ```bash
-   git remote add upstream https://github.com/ORIGINAL_OWNER/DupPicFinder.git
+   git remote add upstream https://github.com/ecolasanto/DupPicFinder.git
    ```
 
 4. **Create virtual environment:**
@@ -97,7 +97,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 #### Bug Reports 🐛
 
-Found a bug? Please [open an issue](https://github.com/yourusername/DupPicFinder/issues/new) with:
+Found a bug? Please [open an issue](https://github.com/ecolasanto/DupPicFinder/issues/new) with:
 
 - **Clear title** describing the bug
 - **Detailed description** of the problem
@@ -111,7 +111,7 @@ Found a bug? Please [open an issue](https://github.com/yourusername/DupPicFinder
 
 #### Feature Requests 💡
 
-Have an idea? Please [open an issue](https://github.com/yourusername/DupPicFinder/issues/new) with:
+Have an idea? Please [open an issue](https://github.com/ecolasanto/DupPicFinder/issues/new) with:
 
 - **Clear title** describing the feature
 - **Detailed description** of the feature
@@ -142,7 +142,7 @@ Ready to write code? Great! See [Development Workflow](#development-workflow) be
 
 ### 1. Choose an Issue
 
-- Browse [open issues](https://github.com/yourusername/DupPicFinder/issues)
+- Browse [open issues](https://github.com/ecolasanto/DupPicFinder/issues)
 - Look for issues labeled `good first issue` or `help wanted`
 - Comment on the issue to let others know you're working on it
 

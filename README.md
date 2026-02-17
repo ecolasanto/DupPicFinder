@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Tests](https://img.shields.io/badge/tests-192%20passing-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-227%20passing-brightgreen.svg)
 
 ---
 
@@ -55,12 +55,16 @@ DupPicFinder is a Python-based GUI desktop application designed to help you find
 ### 🚀 Performance
 - **Background scanning** with progress indicators - UI stays responsive
 - **Large dataset support** - handles approximately 1TB of image files
+- **SQLite hash cache** - skip re-hashing unchanged files (760x speedup on repeat scans)
+- **Multi-threaded hashing** - parallel hash computation using all available CPU cores
 - **Efficient hashing** with chunk-based reading for memory optimization
 - **Cancellable operations** - stop long-running tasks at any time
+- **Performance statistics** - scan/hash timing, throughput, and format breakdown in status bar
 
 ### 🎨 User Experience
 - **Tabbed interface** - Image Viewer and Duplicates always accessible
 - **Smart click behavior** - left-click loads in background, right-click switches views
+- **Settings persistence** - window size, column widths, and last directory remembered
 - **Keyboard shortcuts** for power users (F1 to view all shortcuts)
 - **Professional UI** built with PyQt5 for a polished look
 - **Instant updates** - duplicate view refreshes automatically after deletions
@@ -100,7 +104,7 @@ DupPicFinder is a Python-based GUI desktop application designed to help you find
 
 **No Python installation required!**
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/DupPicFinder/releases) page
+1. Download the latest release from the [Releases](https://github.com/ecolasanto/DupPicFinder/releases) page
 2. Extract the zip file
 3. Make the executable file executable:
    ```bash
@@ -129,7 +133,7 @@ DupPicFinder is a Python-based GUI desktop application designed to help you find
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/DupPicFinder.git
+   git clone https://github.com/ecolasanto/DupPicFinder.git
    cd DupPicFinder
    ```
 
@@ -248,7 +252,7 @@ DupPicFinder/
 │   │   ├── file_tree.py     # File browser widget
 │   │   ├── image_viewer.py  # Image display widget
 │   │   ├── duplicates_view.py   # Duplicate results display
-│   │   ├── tabbed_panel.py  # Tabbed interface
+│   │   ├── tabbed_right_panel.py  # Tabbed interface
 │   │   └── dialogs.py       # Dialog windows
 │   ├── core/
 │   │   ├── scanner.py       # Directory scanning
@@ -299,7 +303,7 @@ pyinstaller --onefile --windowed --name DupPicFinder src/main.py
 
 ## 🧪 Testing
 
-DupPicFinder has a comprehensive test suite with **192 passing tests** covering all core functionality.
+DupPicFinder has a comprehensive test suite with **227 passing tests** covering all core functionality.
 
 ### Running Tests
 
@@ -328,7 +332,8 @@ python -m pytest tests/test_scanner.py
 | GUI components | 87 | 95%+ |
 | File operations | 29 | 95%+ |
 | Format support | 22 | 100% |
-| **Total** | **192** | **95%+** |
+| Performance & settings | 35 | 95%+ |
+| **Total** | **227** | **95%+** |
 
 ---
 
@@ -371,7 +376,7 @@ Contributions are welcome! Whether it's bug reports, feature requests, or code c
 
 ### Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/yourusername/DupPicFinder/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/ecolasanto/DupPicFinder/issues) with:
 
 - Clear description of the problem/feature
 - Steps to reproduce (for bugs)
@@ -397,8 +402,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: See [User Guide](docs/USER_GUIDE.md) for detailed instructions
-- **Issues**: [GitHub Issues](https://github.com/yourusername/DupPicFinder/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/DupPicFinder/discussions)
+- **Issues**: [GitHub Issues](https://github.com/ecolasanto/DupPicFinder/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ecolasanto/DupPicFinder/discussions)
 
 ---
 
@@ -408,11 +413,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Directory scanning with progress indicators
 - [x] Image viewing and browsing
 - [x] File operations (rename, delete, rotate)
-- [x] Hash-based duplicate detection
+- [x] Hash-based duplicate detection (MD5/SHA256)
 - [x] Export duplicate results
 - [x] Tabbed interface
 - [x] Context menus
 - [x] Keyboard shortcuts
+- [x] SQLite hash cache (760x speedup on repeat scans)
+- [x] Multi-threaded hash computation
+- [x] Settings persistence (window layout, column widths, last directory)
+- [x] Performance monitoring (scan/hash timing, format breakdown)
+- [x] Enhanced error handling (corrupted files, permissions, network paths)
 
 ### Future Enhancements 🔮
 - [ ] Perceptual hashing for similar (not identical) images
@@ -422,12 +432,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Move duplicates instead of delete
 - [ ] Thumbnail generation for faster preview
 - [ ] Multi-select with Ctrl/Shift keys
-- [ ] Configuration file for user preferences
-- [ ] Database caching for hash results
+- [ ] Windows build support
 
 ---
 
 **Made with ❤️ for photographers and digital packrats everywhere**
 
 **Status**: Production Ready - All Core Features Complete ✅
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-17
