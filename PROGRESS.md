@@ -715,16 +715,57 @@ Capture and add screenshots to complete the documentation:
 
 **Estimated effort**: 30-60 minutes
 
-### Option 3: Continue Development (Optional)
-**Phase 4: Format Support Enhancement**
-- Full HEIC/HEIF testing and optimization
-- Additional formats (WEBP, TIFF)
-- Format conversion utilities
+### Option 3: Windows Build Support (Future)
 
-**Phase 5: Performance & Polish**
-- Large dataset optimization (~1TB)
-- Database caching for hash results
-- Multi-threaded hash computation
+PyInstaller must run **on Windows** to produce a `.exe` — cross-compilation
+from Linux is not supported.  Two approaches are available:
+
+#### Option A: GitHub Actions (Recommended)
+Automated build triggered on every push.  No Windows machine needed.
+
+Create `.github/workflows/build.yml`:
+```yaml
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pyinstaller DupPicFinder.spec
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DupPicFinder-windows
+          path: dist/DupPicFinder.exe
+```
+
+#### Option B: build-windows.bat (Manual)
+Run on a Windows machine or VM:
+```bat
+@echo off
+python -m venv venv
+call venv\Scripts\activate
+pip install -r requirements.txt pyinstaller
+pyinstaller --clean DupPicFinder.spec
+```
+
+#### Code changes needed before either build:
+1. **Windows cache path** — update `HashCache._default_cache_dir()` to use
+   `%LOCALAPPDATA%\DupPicFinder\cache` on Windows instead of `~/.cache/`:
+   ```python
+   import os, sys
+   if sys.platform == 'win32':
+       base = Path(os.environ.get('LOCALAPPDATA', Path.home()))
+   else:
+       base = Path.home() / '.cache'
+   cache_dir = base / 'DupPicFinder'
+   ```
+2. **DupPicFinder.spec** — add `console=False` and an `.ico` icon file for
+   the Windows executable.
+3. **pillow-heif** — Windows wheels are available on PyPI, no extra steps.
+
+**Estimated effort**: 2-3 hours
 
 ### Option 4: Testing with Real Data
 Continue user acceptance testing:
