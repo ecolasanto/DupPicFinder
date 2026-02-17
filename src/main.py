@@ -839,7 +839,7 @@ class DupPicFinderApp:
         self.duplicates_view.save_column_widths(self.settings_manager)
 
         # Save last active tab
-        current_tab = self.tabbed_panel.tabs.currentIndex()
+        current_tab = self.tabbed_panel.tab_widget.currentIndex()
         self.settings_manager.save_last_tab(current_tab)
 
     def _restore_settings(self):
