@@ -52,5 +52,4 @@ test_data/large_dataset/
 
 # Distribution executables (ignore binaries, keep documentation)
 dist/DupPicFinder
-dist/dockerBuild/*/DupPicFinder
-dist/dockerBuild/*/*.tar.gz
+dist/DupPicFinder-*
