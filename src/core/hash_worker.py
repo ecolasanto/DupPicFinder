@@ -3,7 +3,7 @@
 import os
 import time
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -30,17 +30,28 @@ class HashWorker(QThread):
     hash_complete = pyqtSignal(int, float)  # (total_hashed, elapsed_seconds)
     hash_error = pyqtSignal(str)  # error_message
 
-    def __init__(self, image_files: List[ImageFile], algorithm: HashAlgorithm = 'md5', max_workers: int = None):
+    def __init__(
+        self,
+        image_files: List[ImageFile],
+        algorithm: HashAlgorithm = 'md5',
+        max_workers: int = None,
+        cache=None,
+    ):
         """Initialize the hash worker.
 
         Args:
             image_files: List of ImageFile objects to hash
             algorithm: Hash algorithm to use ('md5' or 'sha256')
             max_workers: Maximum number of worker threads (default: CPU count)
+            cache: Optional HashCache instance.  When provided, unchanged files
+                   are served from the cache without reading from disk.  Must be
+                   accessed only from the QThread (not from worker threads).
         """
         super().__init__()
         self.image_files = image_files
         self.algorithm = algorithm
+        self.cache = cache
+        self.cache_hits = 0  # Set during run(); read by caller after completion
         self._cancelled = False
 
         # Auto-detect optimal thread count if not specified
@@ -52,31 +63,58 @@ class HashWorker(QThread):
             self.max_workers = max_workers
 
     def run(self):
-        """Run the hashing operation in the background thread with multi-threading.
+        """Run the hashing operation in the background thread.
 
-        This method is called when the thread starts. It hashes files in parallel
-        using a ThreadPoolExecutor and emits signals as it progresses.
+        Execution is split into three phases:
+
+        Phase 1 — Cache lookup (QThread only, no disk I/O):
+            Bulk-query the cache for all files.  Emit file_hashed signals for
+            hits immediately; collect misses for Phase 2.
+
+        Phase 2 — Parallel hashing of cache misses (ThreadPoolExecutor):
+            Hash only the files that were not in the cache.
+
+        Phase 3 — Cache store (QThread only):
+            Bulk-insert the new hashes so future runs can skip them.
         """
         try:
-            # Start timing
             start_time = time.time()
-
             total_files = len(self.image_files)
             hashed_count = 0
+            self.cache_hits = 0
 
-            # Use ThreadPoolExecutor for parallel hashing
+            # ----------------------------------------------------------
+            # Phase 1: bulk cache lookup (QThread only)
+            # ----------------------------------------------------------
+            files_to_hash: List[ImageFile] = self.image_files
+            new_results: Dict[Path, str] = {}
+
+            if self.cache is not None:
+                hits, misses = self.cache.lookup_batch(
+                    self.image_files, self.algorithm
+                )
+                self.cache_hits = len(hits)
+
+                for path, hash_value in hits.items():
+                    if self._cancelled:
+                        return
+                    self.file_hashed.emit(path, hash_value)
+                    hashed_count += 1
+                    self.hash_progress.emit(hashed_count, total_files)
+
+                files_to_hash = misses
+
+            # ----------------------------------------------------------
+            # Phase 2: parallel hashing of cache misses
+            # ----------------------------------------------------------
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                # Submit all hash tasks
                 future_to_file = {
                     executor.submit(self._hash_file, img_file): img_file
-                    for img_file in self.image_files
+                    for img_file in files_to_hash
                 }
 
-                # Process completed hashes as they finish
                 for future in as_completed(future_to_file):
-                    # Check if cancelled
                     if self._cancelled:
-                        # Cancel all pending futures
                         for f in future_to_file:
                             f.cancel()
                         return
@@ -84,29 +122,26 @@ class HashWorker(QThread):
                     img_file = future_to_file[future]
 
                     try:
-                        # Get the hash result
                         hash_value = future.result()
-
                         if hash_value is not None:
-                            # Emit file_hashed signal
                             self.file_hashed.emit(img_file.path, hash_value)
                             hashed_count += 1
-
-                    except Exception as e:
-                        # Skip files that failed to hash, but continue with others
+                            new_results[img_file.path] = hash_value
+                    except Exception:
                         pass
 
-                    # Emit progress update
                     self.hash_progress.emit(hashed_count, total_files)
 
-            # Calculate elapsed time
-            elapsed_time = time.time() - start_time
+            # ----------------------------------------------------------
+            # Phase 3: bulk cache store (QThread only)
+            # ----------------------------------------------------------
+            if self.cache is not None and new_results:
+                self.cache.store_batch(new_results, files_to_hash, self.algorithm)
 
-            # Emit completion signal with timing
+            elapsed_time = time.time() - start_time
             self.hash_complete.emit(hashed_count, elapsed_time)
 
         except Exception as e:
-            # Emit error signal
             self.hash_error.emit(str(e))
 
     def _hash_file(self, img_file: ImageFile) -> str:

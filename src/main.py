@@ -34,6 +34,7 @@ from src.core.file_ops import rename_file, delete_file, rotate_image, FileOperat
 from src.core.file_model import ImageFile
 from src.utils.export import export_duplicates_to_file
 from src.utils.settings import SettingsManager
+from src.utils.hash_cache import HashCache
 
 
 class DupPicFinderApp:
@@ -50,6 +51,9 @@ class DupPicFinderApp:
 
         # Create settings manager
         self.settings_manager = SettingsManager()
+
+        # Persistent hash cache (lives for the entire process)
+        self.hash_cache = HashCache()
 
         # Create components
         self.scanner = DirectoryScanner()
@@ -93,8 +97,8 @@ class DupPicFinderApp:
         # Restore settings after UI is set up
         self._restore_settings()
 
-        # Connect close event to save settings
-        self.app.aboutToQuit.connect(self._save_settings)
+        # Connect close event to save settings and close cache
+        self.app.aboutToQuit.connect(self._on_quit)
 
         # Register unsaved-changes check so the window can prompt before closing
         self.main_window._close_check_callback = self._check_unsaved_on_close
@@ -612,7 +616,11 @@ class DupPicFinderApp:
         progress_dialog = HashProgressDialog(self.main_window)
 
         # Create hash worker
-        self.hash_worker = HashWorker(self.scanned_files, algorithm='md5')
+        self.hash_worker = HashWorker(
+            self.scanned_files,
+            algorithm='md5',
+            cache=self.hash_cache,
+        )
 
         # Connect worker signals
         self.hash_worker.file_hashed.connect(
@@ -654,6 +662,8 @@ class DupPicFinderApp:
 
         # Calculate performance metrics
         files_per_sec = hashed_count / elapsed if elapsed > 0 else 0
+        cache_hits = getattr(self.hash_worker, 'cache_hits', 0)
+        cache_info = f", {cache_hits} from cache" if cache_hits > 0 else ""
 
         # Show results
         if duplicates:
@@ -667,7 +677,7 @@ class DupPicFinderApp:
             self.main_window.update_status(
                 f"Found {len(duplicates)} duplicate groups "
                 f"({self.duplicate_finder.get_duplicate_count()} duplicate files) "
-                f"in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)"
+                f"in {elapsed:.1f}s ({files_per_sec:.0f} files/sec{cache_info})"
             )
 
             # Show info message
@@ -676,18 +686,22 @@ class DupPicFinderApp:
                 "Duplicates Found",
                 f"Found {len(duplicates)} groups of duplicate files.\n\n"
                 f"Total duplicate files: {self.duplicate_finder.get_duplicate_count()}\n"
-                f"Hashing completed in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)\n\n"
-                f"View them in the 'Duplicates' tab.\n"
+                f"Hashing completed in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)\n"
+                + (f"Cache hits: {cache_hits} files skipped\n" if cache_hits > 0 else "")
+                + f"\nView them in the 'Duplicates' tab.\n"
                 f"Click any file path to view and manage it.",
             )
         else:
             # No duplicates found
-            self.main_window.update_status(f"No duplicates found (scanned in {elapsed:.1f}s)")
+            self.main_window.update_status(
+                f"No duplicates found (scanned in {elapsed:.1f}s{cache_info})"
+            )
             QMessageBox.information(
                 self.main_window,
                 "No Duplicates",
                 f"No duplicate files were found in the scanned images.\n\n"
-                f"Hashing completed in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)",
+                f"Hashing completed in {elapsed:.1f}s ({files_per_sec:.0f} files/sec)"
+                + (f"\nCache hits: {cache_hits} files skipped" if cache_hits > 0 else ""),
             )
 
     def _on_hash_error(self, progress_dialog: HashProgressDialog, error_message: str):
@@ -853,6 +867,12 @@ class DupPicFinderApp:
             self.tabbed_panel.show_duplicates()
         else:
             self.tabbed_panel.show_image_viewer()
+
+    def _on_quit(self):
+        """Clean up resources and save settings on application exit."""
+        self._save_settings()
+        if self.hash_cache:
+            self.hash_cache.close()
 
     def _check_unsaved_on_close(self) -> bool:
         """Check for unsaved changes before the window closes.
