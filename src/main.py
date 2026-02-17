@@ -16,7 +16,7 @@ try:
 except ImportError:
     pass  # pillow-heif not available, HEIC support disabled
 
-from PyQt5.QtWidgets import QApplication, QMessageBox, QMenu, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMenu, QFileDialog, QAction
 from PyQt5.QtCore import QEventLoop
 
 from src.gui.main_window import MainWindow
