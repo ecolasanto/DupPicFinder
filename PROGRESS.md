@@ -386,7 +386,7 @@
 
 ### Test Summary
 
-**Total Tests**: 192 (170 existing + 22 new format tests)
+**Total Tests at end of Phase 4**: 192 (170 existing + 22 new format tests)
 **Passing**: 192
 **Failing**: 0
 **Coverage**: Format support at 100%
@@ -505,20 +505,20 @@
 - [x] Improved status bar ready message with key shortcut hints
 - [x] Keyboard shortcut hints shown in image viewing status message
 
-### Build Structure Improvements ✅
-- [x] Restructured packaging directory
-- [x] `dist/` contains ONLY build artifacts
-- [x] `packaging/` contains build configuration
+### Build Infrastructure ✅
 - [x] Both builds output to `dist/` with distinct names:
-  - `dist/DupPicFinder` (native build)
-  - `dist/DupPicFinder-ubuntu-20.04` (Docker build)
-- [x] No more accidental deletion of build configs
-- [x] `build-docker.sh` wrapper script for convenience
+  - `dist/DupPicFinder` (~61 MB, native build)
+  - `dist/DupPicFinder-ubuntu-20.04` (~74 MB, Docker build)
+- [x] `build-native.sh` — native build script
+- [x] `build-docker.sh` — Ubuntu 20.04 compatible build script
+- [x] `build-windows.bat` — Windows build script
+- [x] `DupPicFinder.spec` — PyInstaller configuration
+- [x] `.github/workflows/build-windows.yml` — CI Windows build
 
 ### Test Summary
 
-**Total Tests**: 208
-**Passing**: 208 (100%)
+**Total Tests**: 227
+**Passing**: 227 (100%)
 **Coverage**: Core modules at 95%+
 
 ### Commits Today
@@ -602,8 +602,8 @@
 - CONTRIBUTING.md (complete guidelines, 500+ lines)
 - LICENSE (MIT License)
 - docs/screenshots/README.md (screenshot guide)
-- dist/INSTALL.txt (end-user instructions)
-- dist/DupPicFinder.desktop (desktop shortcut)
+- packaging/desktop/INSTALL.txt (end-user instructions, moved from dist/ during Phase 5 restructure)
+- packaging/desktop/DupPicFinder.desktop (desktop shortcut, moved from dist/ during Phase 5 restructure)
 
 **Documentation Quality:**
 - Clear, professional writing
@@ -637,35 +637,6 @@
 
 ---
 
-## Phase 4: Format Support Enhancement (OPTIONAL)
-
-**Target Features**:
-- Full HEIC/HEIF testing and optimization
-- Additional formats (WEBP, TIFF)
-- Format conversion utilities
-- Format-specific error handling
-
-**Note**: Basic HEIC support already works via pillow-heif
-
-**Estimated Effort**: 2-3 hours
-
----
-
-## Phase 5: Performance & Polish (OPTIONAL)
-
-**Target Features**:
-- Large dataset optimization (~1TB test)
-- Database caching for hash results
-- Multi-threaded hash computation
-- Memory profiling and optimization
-- UI polish and refinements
-
-**Note**: Current implementation already handles large datasets efficiently
-
-**Estimated Effort**: 6-8 hours
-
----
-
 ## Development Environment
 
 - **Python**: 3.12.3
@@ -676,110 +647,33 @@
 
 ## Git Repository Status
 
-**Total Commits**: 24
-**Latest**: `feat: Add delete confirmation and smart duplicates view updates`
+**Repository**: https://github.com/ecolasanto/DupPicFinder (public)
+**Latest**: `docs: Update screenshots README to reflect actual screenshots added`
 
-### Recent Commits (Phase 3)
+### Recent Commits
 ```
-7f9adc4 feat: Add delete confirmation and smart duplicates view updates
-6eefbe6 feat: Integrate duplicate detection into GUI (Phase 3 complete)
-2d3b8af feat: Add core duplicate detection functionality (Phase 3 part 1)
-caf508e feat: Add comprehensive automated GUI tests (Phase 2 step 8)
-bf6c0fe feat: Add background scanning with progress dialog (Phase 2 step 7)
-b2f9d2a feat: Add keyboard shortcuts help dialog
-527a6d7 feat: Enhance keyboard navigation
-4ecd7e1 feat: Add image rotation with explicit save
-932a3e3 feat: Add file deletion with confirmation and UI improvements
+e239b3a docs: Update screenshots README to reflect actual screenshots added
+7f993ce docs: Add application screenshots
+b7dfca9 chore: Relax dependency pins to minimum version constraints for Windows compatibility
+ecc8ae9 feat: Add Windows build infrastructure and cross-platform cache path support
+ca6ce16 docs: Update README accuracy - test counts, features, roadmap, username placeholders
+0f306c4 chore: Update .gitignore to ignore all dist binaries
+f3a5baa fix: Emit hash_complete before cache store to avoid blocking the UI
+4268829 fix: Remove debug prints; eliminate extra stat() calls in cache
+624483c fix: Open SQLite cache connection inside QThread to prevent cross-thread error
 ```
 
 ---
 
 ## Next Steps
 
-### Option 1: Add Screenshots (Recommended)
-Capture and add screenshots to complete the documentation:
-1. Launch DupPicFinder
-2. Follow instructions in `docs/screenshots/README.md`
-3. Capture required screenshots
-4. Commit screenshots to repository
+### Windows Build + Test ✅ Infrastructure Complete
+- `build-windows.bat` and `.github/workflows/build-windows.yml` are in place
+- Pull from GitHub on a Windows machine and run `build-windows.bat`
+- Verify the resulting `dist/DupPicFinder.exe` works correctly
 
-**Estimated effort**: 15-30 minutes
-
-### Option 2: GitHub Repository Setup (If Open Sourcing)
-1. Create GitHub repository
-2. Update README links (replace `yourusername` placeholders)
-3. Push code to GitHub
-4. Set up Issues and Discussions
-5. Create first release with distribution package
-6. Add repository badges
-
-**Estimated effort**: 30-60 minutes
-
-### Option 3: Windows Build Support (Future)
-
-PyInstaller must run **on Windows** to produce a `.exe` — cross-compilation
-from Linux is not supported.  Two approaches are available:
-
-#### Option A: GitHub Actions (Recommended)
-Automated build triggered on every push.  No Windows machine needed.
-
-Create `.github/workflows/build.yml`:
-```yaml
-jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
-      - run: pip install -r requirements.txt pyinstaller
-      - run: pyinstaller DupPicFinder.spec
-      - uses: actions/upload-artifact@v4
-        with:
-          name: DupPicFinder-windows
-          path: dist/DupPicFinder.exe
-```
-
-#### Option B: build-windows.bat (Manual)
-Run on a Windows machine or VM:
-```bat
-@echo off
-python -m venv venv
-call venv\Scripts\activate
-pip install -r requirements.txt pyinstaller
-pyinstaller --clean DupPicFinder.spec
-```
-
-#### Code changes needed before either build:
-1. **Windows cache path** — update `HashCache._default_cache_dir()` to use
-   `%LOCALAPPDATA%\DupPicFinder\cache` on Windows instead of `~/.cache/`:
-   ```python
-   import os, sys
-   if sys.platform == 'win32':
-       base = Path(os.environ.get('LOCALAPPDATA', Path.home()))
-   else:
-       base = Path.home() / '.cache'
-   cache_dir = base / 'DupPicFinder'
-   ```
-2. **DupPicFinder.spec** — add `console=False` and an `.ico` icon file for
-   the Windows executable.
-3. **pillow-heif** — Windows wheels are available on PyPI, no extra steps.
-
-**Estimated effort**: 2-3 hours
-
-### Option 4: Testing with Real Data
-Continue user acceptance testing:
-```bash
-cd /home/dad/workspace/DupPicFinder
-source venv/bin/activate
-python src/main.py
-```
-
-Or use the standalone executable:
-```bash
-cd /home/dad/workspace/DupPicFinder/dist
-./DupPicFinder
-```
+### Make Repository Public ✅
+- GitHub repo: https://github.com/ecolasanto/DupPicFinder (public)
 
 ---
 
@@ -790,19 +684,20 @@ cd /home/dad/workspace/DupPicFinder/dist
 - **Phase 2** (File Management): Completed 2026-02-15
 - **Phase 3** (Duplicate Detection): Completed 2026-02-15
 - **Phase 4** (Format Support): Completed 2026-02-16
-- **Phase 6** (Documentation): Completed 2026-02-16
+- **Phase 5** (Performance & Polish): Completed 2026-02-17
+- **Phase 6** (Documentation): Completed 2026-02-18
 
 ### Key Achievements
-- ✅ **192 tests** - All tests passing (100% success rate)
-- ✅ **26+ commits** - Clean, documented git history
-- ✅ **5 major phases complete** - Foundation, File Management, Duplicate Detection, Format Support, Documentation
+- ✅ **227 tests** - All tests passing (100% success rate)
+- ✅ **6 major phases complete** - Foundation, File Management, Duplicate Detection, Format Support, Performance & Polish, Documentation
 - ✅ **10 image formats** - JPG, JPEG, PNG, GIF, BMP, HEIC, HEIF, WEBP, TIFF, TIF
-- ✅ **Professional documentation** - README, User Guide, Contributing Guide
-- ✅ **Distribution ready** - Standalone executable with installation files
+- ✅ **Professional documentation** - README, User Guide, Contributing Guide, screenshots
+- ✅ **Distribution ready** - Standalone executables (Linux native + Ubuntu 20.04 compatible + Windows)
 - ✅ **Professional UX** - Tabbed interface, context menus, confirmation dialogs
 - ✅ **Smart updates** - Duplicates view updates without re-scanning
+- ✅ **SQLite hash cache** - 760x speedup on repeat scans
 - ✅ **Comprehensive features** - All core requirements met
-- ✅ **Open source ready** - MIT License, CONTRIBUTING.md, complete docs
+- ✅ **Open source ready** - MIT License, CONTRIBUTING.md, GitHub repo (public)
 
 ### Current Status
 ✅ **Production-ready duplicate image finder and manager**
@@ -822,13 +717,13 @@ cd /home/dad/workspace/DupPicFinder/dist
 - Detailed 600+ line User Guide
 - Complete Contributing guidelines
 - MIT License
-- Distribution package with INSTALL.txt
+- Application screenshots
 
 **Distribution:**
-- Standalone 51MB executable (no dependencies)
-- Desktop shortcut file
-- Installation instructions
-- Ready to copy to any computer
+- Standalone ~61MB executable (native, no dependencies)
+- Standalone ~74MB executable (Ubuntu 20.04 compatible, no dependencies)
+- Windows build infrastructure (build-windows.bat, GitHub Actions workflow)
+- Ready to distribute to Linux and Windows users
 
 ### Code Quality
 - Comprehensive error handling
@@ -842,28 +737,41 @@ cd /home/dad/workspace/DupPicFinder/dist
 ### Files Ready for Distribution
 ```
 dist/
-├── DupPicFinder           (51 MB standalone executable)
-├── DupPicFinder.desktop   (Desktop shortcut file)
-└── INSTALL.txt            (Installation instructions)
+├── DupPicFinder                 (~61 MB, native Linux build)
+└── DupPicFinder-ubuntu-20.04    (~74 MB, Ubuntu 20.04+ compatible build)
 ```
 
-### Documentation Files
+### Key Project Files
 ```
 docs/
 ├── USER_GUIDE.md           (Comprehensive user documentation)
 └── screenshots/
-    └── README.md           (Screenshot capture instructions)
+    ├── README.md           (Screenshot descriptions)
+    ├── Initial-Startup.png
+    ├── SampleJpgRendering.png
+    └── Duplicates.png
+
+dist/                       (git-ignored build outputs)
+├── DupPicFinder                 (~61 MB native Linux)
+└── DupPicFinder-ubuntu-20.04    (~74 MB Ubuntu 20.04+)
+
+packaging/
+├── desktop/                (Linux .desktop, INSTALL.txt, VERSION.txt)
+├── docker/ubuntu-20.04/    (Dockerfile + build.sh)
+└── windows/                (Windows build helpers)
 
 Root:
+├── build-native.sh         (Native Linux build script)
+├── build-docker.sh         (Docker build wrapper)
+├── build-windows.bat       (Windows build script)
+├── DupPicFinder.spec       (PyInstaller configuration)
 ├── README.md               (Main project documentation)
 ├── CONTRIBUTING.md         (Contribution guidelines)
+├── BUILD.md                (Build instructions)
+├── BUILDING_PORTABLE.md    (GLIBC portability guide)
 ├── LICENSE                 (MIT License)
 ├── PROGRESS.md            (This file)
 └── CLAUDE.md              (Project requirements)
 ```
 
-**Ready for production use, open source release, and distribution!** 🎉
-
-### Only Missing
-- Screenshots (optional but recommended)
-- GitHub repository setup (if open sourcing)
+**Ready for production use, open source release, and distribution!**

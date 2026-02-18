@@ -8,7 +8,7 @@
 - Always use absolute paths starting with `/home/dad/workspace/DupPicFinder/`
 - Verify working directory before any file operations
 - If the shell resets to a different directory, explicitly cd back to this project
-- Do not touch `/home/dad/workspace/Hobo-Onset/CompressorMonitor/` or any other projects
+- Do not touch any other projects under /home/dad/workspace
 
 ## Project Purpose
 

@@ -2,6 +2,8 @@
 
 **A powerful, user-friendly desktop application for finding and managing duplicate images in your photo collections.**
 
+This entire project was planed, designed, implemented and unit tested via Claude Code. I inspired the plan, reviewed the process and corrected issues I noted during it's development. Final functional testing was performed on Linux Mint 22.2, Ubuntu 20.04 and Windows 10. All developement was done with the help of VScode and Claude Code running on Linux Mint VM and a Windows machine when the Linux versions were completed. I added the snapshots and this paragraph. Thanks to Anthropic for Claude Code.
+
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -83,20 +85,17 @@ DupPicFinder is a Python-based GUI desktop application designed to help you find
 ### Main Window - Image Viewer
 *Browse and view your images chronologically with instant preview*
 
-![Main Window](docs/screenshots/main_window.png)
-<!-- TODO: Add actual screenshot -->
+![Main Window](docs/screenshots/SampleJpgRendering.png)
+
+### Initial Startup
+*Application on launch before a directory has been loaded*
+
+![Initial Startup](docs/screenshots/Initial-Startup.png)
 
 ### Duplicate Detection
 *Tree-structured view showing duplicate files across different locations*
 
-![Duplicates View](docs/screenshots/duplicates_view.png)
-<!-- TODO: Add actual screenshot -->
-
-### File Operations
-*Context menu for quick access to rename, delete, rotate, and view operations*
-
-![Context Menu](docs/screenshots/context_menu.png)
-<!-- TODO: Add actual screenshot -->
+![Duplicates View](docs/screenshots/Duplicates.png)
 
 ## 🚀 Installation
 
@@ -115,13 +114,20 @@ DupPicFinder is a Python-based GUI desktop application designed to help you find
    ./DupPicFinder
    ```
 
-**Optional: Create Desktop Shortcut**
-1. Edit the provided `DupPicFinder.desktop` file
-2. Update the `Exec=` line with the full path to the executable
-3. Copy to your desktop or applications folder:
-   ```bash
-   cp DupPicFinder.desktop ~/.local/share/applications/
-   ```
+**Optional: Create Desktop Shortcut for Linux machines**
+
+Create a `DupPicFinder.desktop` file with your preferred text editor:
+```ini
+[Desktop Entry]
+Name=DupPicFinder
+Exec=/path/to/DupPicFinder
+Type=Application
+Categories=Graphics;
+```
+Then copy it to your applications folder:
+```bash
+cp DupPicFinder.desktop ~/.local/share/applications/
+```
 
 ### Option 2: From Source (For Developers)
 
@@ -248,26 +254,52 @@ DupPicFinder/
 ├── src/
 │   ├── main.py              # Application entry point
 │   ├── gui/
-│   │   ├── main_window.py   # Main application window
-│   │   ├── file_tree.py     # File browser widget
-│   │   ├── image_viewer.py  # Image display widget
-│   │   ├── duplicates_view.py   # Duplicate results display
-│   │   ├── tabbed_right_panel.py  # Tabbed interface
-│   │   └── dialogs.py       # Dialog windows
+│   │   ├── main_window.py        # Main application window
+│   │   ├── file_tree.py          # File browser widget
+│   │   ├── image_viewer.py       # Image display widget
+│   │   ├── duplicates_view.py    # Duplicate results display
+│   │   ├── tabbed_right_panel.py # Tabbed interface
+│   │   ├── delete_dialog.py      # Delete confirmation dialog
+│   │   ├── rename_dialog.py      # Rename file dialog
+│   │   ├── shortcuts_dialog.py   # Keyboard shortcuts dialog
+│   │   ├── scan_progress_dialog.py  # Scan progress dialog
+│   │   └── hash_progress_dialog.py  # Hash progress dialog
 │   ├── core/
-│   │   ├── scanner.py       # Directory scanning
-│   │   ├── hasher.py        # File hashing
-│   │   ├── duplicate_finder.py  # Duplicate detection
-│   │   ├── file_ops.py      # File operations
-│   │   └── file_model.py    # Data models
+│   │   ├── scanner.py            # Directory scanning
+│   │   ├── scan_worker.py        # Background scan thread
+│   │   ├── hasher.py             # File hashing
+│   │   ├── hash_worker.py        # Background hash thread
+│   │   ├── duplicate_finder.py   # Duplicate detection
+│   │   ├── file_ops.py           # File operations
+│   │   └── file_model.py         # Data models
 │   └── utils/
 │       ├── formats.py       # Format detection
-│       └── export.py        # Export functionality
-├── tests/                   # Test suite (170+ tests)
+│       ├── export.py        # Export functionality
+│       ├── hash_cache.py    # SQLite hash cache
+│       └── settings.py      # Settings persistence
+├── tests/                   # Test suite (227 tests)
+│   ├── test_*.py            # Test modules
+│   └── test_data/           # Sample images and fixtures
+├── docs/
+│   ├── USER_GUIDE.md        # Detailed user documentation
+│   └── screenshots/         # Application screenshots
+├── dist/                    # Build outputs (git-ignored)
+│   ├── DupPicFinder                 # Native Linux executable
+│   └── DupPicFinder-ubuntu-20.04    # Ubuntu 20.04+ executable
+├── packaging/               # Build configuration
+│   ├── desktop/             # Linux desktop shortcut files
+│   ├── docker/ubuntu-20.04/ # Docker build (Dockerfile, build.sh)
+│   └── windows/             # Windows build helpers
+├── build-native.sh          # Native Linux build script
+├── build-docker.sh          # Docker (Ubuntu 20.04) build script
+├── build-windows.bat        # Windows build script
+├── DupPicFinder.spec        # PyInstaller configuration
 ├── requirements.txt         # Python dependencies
-├── PROGRESS.md             # Development progress tracking
-├── CLAUDE.md               # Project requirements
-└── README.md               # This file
+├── setup.py                 # Package configuration
+├── PROGRESS.md              # Development progress tracking
+├── BUILD.md                 # Build instructions
+├── CLAUDE.md                # Project requirements
+└── README.md                # This file
 ```
 
 ### Building from Source
@@ -276,20 +308,17 @@ See [Installation - Option 2](#option-2-from-source-for-developers) above.
 
 ### Creating a Standalone Executable
 
-To build a standalone executable with PyInstaller:
+Use the provided build scripts (they handle virtual environment activation and PyInstaller configuration automatically):
 
 ```bash
-# Activate virtual environment
-source venv/bin/activate
+# Native build (current system)
+bash build-native.sh
 
-# Install PyInstaller
-pip install pyinstaller
-
-# Build executable
-pyinstaller --onefile --windowed --name DupPicFinder src/main.py
-
-# Executable will be in dist/DupPicFinder
+# Docker build (Ubuntu 20.04 compatible, requires Docker)
+bash build-docker.sh
 ```
+
+Both scripts use `DupPicFinder.spec` for consistent PyInstaller configuration. Executables are placed in `dist/`.
 
 ### Code Quality
 
@@ -423,6 +452,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Settings persistence (window layout, column widths, last directory)
 - [x] Performance monitoring (scan/hash timing, format breakdown)
 - [x] Enhanced error handling (corrupted files, permissions, network paths)
+- [x] Windows build support
 
 ### Future Enhancements 🔮
 - [ ] Perceptual hashing for similar (not identical) images
@@ -432,11 +462,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Move duplicates instead of delete
 - [ ] Thumbnail generation for faster preview
 - [ ] Multi-select with Ctrl/Shift keys
-- [ ] Windows build support
+
 
 ---
 
 **Made with ❤️ for photographers and digital packrats everywhere**
 
 **Status**: Production Ready - All Core Features Complete ✅
-**Last Updated**: 2026-02-17
+**Last Updated**: 2026-02-18

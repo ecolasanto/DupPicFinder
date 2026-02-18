@@ -82,14 +82,14 @@ Build using Docker to target Ubuntu 20.04 (GLIBC 2.31) for maximum compatibility
 1. **Run the build script:**
    ```bash
    cd /home/dad/workspace/DupPicFinder
-   ./build-portable.sh
+   bash build-docker.sh
    ```
 
 2. **What it does:**
    - Creates a Ubuntu 20.04 Docker container
    - Installs Python 3.12 from source
    - Builds the executable with GLIBC 2.31
-   - Outputs to `dist/DupPicFinder`
+   - Outputs to `dist/DupPicFinder-ubuntu-20.04`
 
 3. **Result:**
    - Executable compatible with:
@@ -180,7 +180,7 @@ cat /etc/os-release
 
 **Build portable (Docker):**
 ```bash
-./build-portable.sh
+bash build-docker.sh
 ```
 
 **Build locally:**
@@ -207,12 +207,12 @@ pyinstaller --clean DupPicFinder.spec
 
 ---
 
-## Updates to Documentation
+## Minimum Requirements
 
-The `dist/VERSION.txt` and `dist/INSTALL.txt` should note:
-
-**Minimum Requirements:**
+The `dist/DupPicFinder-ubuntu-20.04` build requires:
 - Linux x86_64
 - GLIBC 2.31+ (Ubuntu 20.04+, Debian 11+)
+
+The `dist/DupPicFinder` native build requires the GLIBC version of the build system (currently GLIBC 2.39 on Linux Mint 22.2).
 
 Or build on your specific system for guaranteed compatibility!

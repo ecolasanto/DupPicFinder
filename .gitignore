@@ -49,6 +49,8 @@ htmlcov/
 # Project specific
 test_data/large_dataset/
 *.log
+SESSION_NOTES.md
+SESSION_NOTES_*.md
 
 # Distribution executables (ignore binaries, keep documentation)
 dist/DupPicFinder

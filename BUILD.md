@@ -26,11 +26,10 @@ DupPicFinder can be built in two ways:
 ### Docker Build (Recommended for Distribution)
 
 ```bash
-cd dist/dockerBuild/ubuntu-20.04
-./build.sh
+bash build-docker.sh
 ```
 
-**Output:** `dist/dockerBuild/ubuntu-20.04/DupPicFinder`
+**Output:** `dist/DupPicFinder-ubuntu-20.04`
 **Build time:** 10-15 minutes (first time), 2-3 minutes (cached)
 **Compatibility:** Ubuntu 20.04+, Debian 11+, GLIBC 2.31+
 
@@ -68,7 +67,7 @@ pyinstaller --clean DupPicFinder.spec
 ### What Gets Built
 
 - **Executable:** `dist/DupPicFinder`
-- **Size:** ~58 MB (varies by system)
+- **Size:** ~61 MB (varies by system)
 - **GLIBC:** Matches your build system
 - **Compatible with:** Your OS version or newer
 
@@ -95,17 +94,14 @@ The build is configured by `DupPicFinder.spec` in the project root.
 ### Building
 
 ```bash
-# Navigate to build directory
-cd dist/dockerBuild/ubuntu-20.04
-
-# Run build script
-./build.sh
+# Run the wrapper script from the project root
+bash build-docker.sh
 ```
 
 ### What Gets Built
 
-- **Executable:** `dist/dockerBuild/ubuntu-20.04/DupPicFinder`
-- **Size:** ~70 MB
+- **Executable:** `dist/DupPicFinder-ubuntu-20.04`
+- **Size:** ~74 MB
 - **GLIBC:** 2.31 (Ubuntu 20.04)
 - **Compatible with:** Ubuntu 20.04+, Debian 11+, Linux Mint 20+
 
@@ -116,31 +112,15 @@ The Docker build:
 2. Compiles Python 3.12 from source with `--enable-shared`
 3. Installs all dependencies (PyQt5, Pillow, pillow-heif)
 4. Runs PyInstaller to create executable
-5. Copies executable to host system
+5. Copies executable to `dist/DupPicFinder-ubuntu-20.04`
 
 ### Build Configuration
 
 The build is configured by:
-- `dist/dockerBuild/ubuntu-20.04/Dockerfile` - Container setup
-- `dist/dockerBuild/ubuntu-20.04/build.sh` - Build script
+- `build-docker.sh` - Wrapper script (project root)
+- `packaging/docker/ubuntu-20.04/Dockerfile` - Container setup
+- `packaging/docker/ubuntu-20.04/build.sh` - Build script (called by wrapper)
 - `DupPicFinder.spec` - PyInstaller configuration (same as native)
-
-### Docker Build Customization
-
-To target a different Ubuntu version:
-
-```bash
-# Copy the ubuntu-20.04 directory
-cp -r dist/dockerBuild/ubuntu-20.04 dist/dockerBuild/ubuntu-22.04
-
-# Edit the Dockerfile FROM line
-# Change: FROM ubuntu:20.04
-# To:     FROM ubuntu:22.04
-
-# Run the build
-cd dist/dockerBuild/ubuntu-22.04
-./build.sh
-```
 
 ---
 
@@ -150,7 +130,7 @@ cd dist/dockerBuild/ubuntu-22.04
 |--------|-------------|--------------|
 | **Build time (first)** | 2-3 min | 10-15 min |
 | **Build time (cached)** | 2-3 min | 2-3 min |
-| **Executable size** | ~58 MB | ~70 MB |
+| **Executable size** | ~61 MB | ~74 MB |
 | **Compatibility** | Current GLIBC+ | Older GLIBC+ |
 | **Use case** | Personal use | Distribution |
 | **Prerequisites** | Python, venv | Docker |
@@ -210,21 +190,13 @@ sudo usermod -aG docker $USER
 **For native build:**
 ```bash
 cd dist
-tar -czf DupPicFinder-v1.1.0-native-x64.tar.gz \
-    DupPicFinder \
-    INSTALL.txt \
-    VERSION.txt \
-    README.txt \
-    DupPicFinder.desktop
+tar -czf DupPicFinder-v1.1.0-native-x64.tar.gz DupPicFinder
 ```
 
 **For Docker build:**
 ```bash
-cd dist/dockerBuild/ubuntu-20.04
-tar -czf DupPicFinder-v1.1.0-ubuntu2004-x64.tar.gz \
-    DupPicFinder \
-    README.txt \
-    VERSION.txt
+cd dist
+tar -czf DupPicFinder-v1.1.0-ubuntu2004-x64.tar.gz DupPicFinder-ubuntu-20.04
 ```
 
 ### Distribution Recommendations
@@ -266,23 +238,20 @@ console=False,
 
 **Build artifacts:**
 ```
-build/              # Temporary build files (can delete)
-dist/               # Final executables
-  DupPicFinder      # Native executable
-  dockerBuild/
-    ubuntu-20.04/
-      DupPicFinder  # Docker executable
+build/                        # Temporary build files (can delete)
+dist/                         # Final executables
+  DupPicFinder                # Native executable
+  DupPicFinder-ubuntu-20.04   # Docker (Ubuntu 20.04) executable
 ```
 
 ### Cleaning Build Artifacts
 
 ```bash
-# Clean native build
-rm -rf build dist
+# Clean native build artifacts
+rm -rf build dist/DupPicFinder
 
 # Clean Docker build
-cd dist/dockerBuild/ubuntu-20.04
-rm -f DupPicFinder
+rm -f dist/DupPicFinder-ubuntu-20.04
 docker rmi duppicfinder-ubuntu2004
 ```
 
@@ -313,7 +282,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd dist/dockerBuild/ubuntu-20.04 && ./build.sh
+      - run: bash build-docker.sh
 ```
 
 ---
@@ -321,5 +290,3 @@ jobs:
 ## See Also
 
 - [BUILDING_PORTABLE.md](BUILDING_PORTABLE.md) - Detailed portability guide
-- [dist/README.txt](dist/README.txt) - Distribution package overview
-- [dist/dockerBuild/ubuntu-20.04/README.txt](dist/dockerBuild/ubuntu-20.04/README.txt) - Docker build specifics

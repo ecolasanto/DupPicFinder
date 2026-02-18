@@ -517,24 +517,44 @@ DupPicFinder/
 │   │   ├── file_tree.py
 │   │   ├── image_viewer.py
 │   │   ├── duplicates_view.py
-│   │   ├── tabbed_panel.py
-│   │   └── dialogs.py
+│   │   ├── tabbed_right_panel.py
+│   │   ├── delete_dialog.py
+│   │   ├── rename_dialog.py
+│   │   ├── shortcuts_dialog.py
+│   │   ├── scan_progress_dialog.py
+│   │   └── hash_progress_dialog.py
 │   ├── core/               # Core functionality
 │   │   ├── scanner.py
+│   │   ├── scan_worker.py
 │   │   ├── hasher.py
+│   │   ├── hash_worker.py
 │   │   ├── duplicate_finder.py
 │   │   ├── file_ops.py
 │   │   └── file_model.py
 │   └── utils/              # Utilities
 │       ├── formats.py
-│       └── export.py
-├── tests/                  # Test suite
+│       ├── export.py
+│       ├── hash_cache.py
+│       └── settings.py
+├── tests/                  # Test suite (227 tests)
 │   ├── test_*.py           # Test files
-│   └── test_data/          # Test data
+│   └── test_data/          # Sample images and fixtures
 ├── docs/                   # Documentation
 │   ├── USER_GUIDE.md
 │   └── screenshots/
+├── dist/                   # Build outputs (git-ignored)
+│   ├── DupPicFinder                # Native Linux executable
+│   └── DupPicFinder-ubuntu-20.04   # Ubuntu 20.04+ executable
+├── packaging/              # Build configuration
+│   ├── desktop/            # Linux desktop shortcut files
+│   ├── docker/ubuntu-20.04/# Docker build (Dockerfile, build.sh)
+│   └── windows/            # Windows build helpers
+├── build-native.sh         # Native Linux build script
+├── build-docker.sh         # Docker build wrapper script
+├── build-windows.bat       # Windows build script
+├── DupPicFinder.spec       # PyInstaller configuration
 ├── requirements.txt        # Dependencies
+├── setup.py                # Package configuration
 ├── README.md               # Main documentation
 ├── CONTRIBUTING.md         # This file
 ├── LICENSE                 # License file
@@ -547,7 +567,7 @@ DupPicFinder/
 - **GUI Module**: PyQt5-based interface
 - **Core Module**: Business logic and algorithms
 - **Utils Module**: Helper functions and utilities
-- **Tests**: Comprehensive test suite (170+ tests)
+- **Tests**: Comprehensive test suite (227 tests)
 
 ---
 
